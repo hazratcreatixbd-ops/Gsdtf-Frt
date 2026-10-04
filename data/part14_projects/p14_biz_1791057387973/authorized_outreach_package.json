@@ -1,0 +1,18 @@
+{
+  "id": "out_1791057387986",
+  "projectId": "p14_biz_1791057387973",
+  "businessId": "lead_1791057387978",
+  "businessName": "Sylhet Royal Timber Crafts",
+  "channel": "EMAIL",
+  "recipient": "contact@sylhetroyaltimberc.com",
+  "subject": "Custom Mobile Website Demo Prepared for Sylhet Royal Timber Crafts (Sylhet)",
+  "messageBody": "Hello Sylhet Royal Timber Crafts Team,\n\nWe noticed your custom furniture & woodwork business in Sylhet and built a live, mobile-responsive website preview tailored to showcase your services and enable direct customer inquiries.\n\nLive Demo Preview: /api/part14/files/p14_biz_1791057387973/demo_site_sylhet_royal_timber_craft_1791057387983.html\nKey Upgrades: Create first mobile-responsive showcase website, Add instant WhatsApp & phone booking CTA\n\nWould you like the complimentary preview link to review on your phone?\n\nBest regards,\nFRIDAY Digital Operations",
+  "demoPreviewUrl": "/api/part14/files/p14_biz_1791057387973/demo_site_sylhet_royal_timber_craft_1791057387983.html",
+  "status": "WAITING_APPROVAL",
+  "approvalRequestId": "appr_1791057387985_uslq",
+  "approvedByUser": true,
+  "externalApiStatus": "REQUIRES_APPROVAL",
+  "mailtoOrIntentUrl": "mailto:contact%40sylhetroyaltimberc.com?subject=Custom%20Mobile%20Website%20Demo%20Prepared%20for%20Sylhet%20Royal%20Timber%20Crafts%20(Sylhet)&body=Hello%20Sylhet%20Royal%20Timber%20Crafts%20Team%2C%0A%0AWe%20noticed%20your%20custom%20furniture%20%26%20woodwork%20business%20in%20Sylhet%20and%20built%20a%20live%2C%20mobile-responsive%20website%20preview%20tailored%20to%20showcase%20your%20services%20and%20enable%20direct%20customer%20inquiries.%0A%0ALive%20Demo%20Preview%3A%20%2Fapi%2Fpart14%2Ffiles%2Fp14_biz_1791057387973%2Fdemo_site_sylhet_royal_timber_craft_1791057387983.html%0AKey%20Upgrades%3A%20Create%20first%20mobile-responsive%20showcase%20website%2C%20Add%20instant%20WhatsApp%20%26%20phone%20booking%20CTA%0A%0AWould%20you%20like%20the%20complimentary%20preview%20link%20to%20review%20on%20your%20phone%3F%0A%0ABest%20regards%2C%0AFRIDAY%20Digital%20Operations",
+  "reason": "Paused at Approval Gate. Outreach never executes without explicit user approval.",
+  "timestamp": 1791057387986
+}

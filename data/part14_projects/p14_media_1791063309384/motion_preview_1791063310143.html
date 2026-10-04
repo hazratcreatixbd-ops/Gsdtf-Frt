@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Authorized Studio Desk Showcase — Motion Reel — Motion Storyboard Preview</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #020617;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ken-burns {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      animation: kenburns 12s ease-in-out infinite alternate;
+    }
+    @keyframes kenburns {
+      0% { transform: scale(1) translate(0, 0); filter: saturate(1); }
+      100% { transform: scale(1.12) translate(-1.5%, -1.5%); filter: saturate(1.25); }
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(2,6,23,0.92) 0%, rgba(2,6,23,0.2) 55%, rgba(2,6,23,0.6) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+    }
+    .badge {
+      align-self: flex-start;
+      background: rgba(245,158,11,0.2);
+      border: 1px solid rgba(251,191,36,0.5);
+      color: #fde68a;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: monospace;
+      letter-spacing: 0.05em;
+    }
+    .caption {
+      max-width: 640px;
+      animation: slideUp 1.2s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h1 { font-size: 22px; margin-bottom: 6px; color: #fff; }
+    p { font-size: 13px; color: #cbd5e1; line-height: 1.4; }
+    .progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #06b6d4, #10b981);
+      animation: progressLoop 12s linear infinite;
+    }
+    @keyframes progressLoop {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <img class="ken-burns" src="/api/part14/files/p14_media_1791063309384/original_visual_1791063310135.svg" alt="Authorized Studio Desk Showcase — Motion Reel" />
+    <div class="overlay">
+      <div class="badge">MOTION STORYBOARD FALLBACK • EXTERNAL VIDEO PROVIDER NOT CONNECTED</div>
+      <div class="caption">
+        <h1>Authorized Studio Desk Showcase — Motion Reel</h1>
+        <p>Cinematic showcase reel for Authorized Studio Desk Showcase</p>
+      </div>
+    </div>
+    <div class="progress"></div>
+  </div>
+</body>
+</html>

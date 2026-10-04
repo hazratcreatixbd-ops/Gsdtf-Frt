@@ -1,0 +1,10 @@
+{
+  "name": "FRIDAY AI Assistant",
+  "description": "Real-time, voice-to-voice AI assistant powered by Gemini Live API with low latency, seamless interruptions, and multilingual intelligence.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

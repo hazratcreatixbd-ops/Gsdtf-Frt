@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">FRIDAY AI</string>
+    <string name="accessibility_service_description">FRIDAY Accessibility Service enables authorized automation for voice-confirmed messaging and device actions. It operates strictly upon your explicit command and never collects passwords or private information.</string>
+</resources>

@@ -1,0 +1,18 @@
+{
+  "id": "out_1791063310342",
+  "projectId": "p14_biz_1791063310269",
+  "businessId": "lead_1791063310320",
+  "businessName": "Sylhet Royal Timber Crafts",
+  "channel": "EMAIL",
+  "recipient": "",
+  "subject": "[DEMO / SAMPLE] Mobile Website Preview Prepared for Sylhet Royal Timber Crafts (Sylhet)",
+  "messageBody": "Hello Sylhet Royal Timber Crafts Team,\n\nWe researched custom furniture & woodwork businesses in Sylhet and created a live, mobile-responsive DEMO / SAMPLE website preview tailored for Sylhet Royal Timber Crafts.\n\nLive Demo Preview: /api/part14/files/p14_biz_1791063310269/demo_site_sylhet_royal_timber_craft_1791063310335.html\nKey Highlights: Upgrade to HTTPS for customer trust, Add SEO-optimized page title\n\nPlease let us know if you would like to review or customize this sample.\n\nBest regards,\nFRIDAY Digital Operations",
+  "demoPreviewUrl": "/api/part14/files/p14_biz_1791063310269/demo_site_sylhet_royal_timber_craft_1791063310335.html",
+  "status": "AUTHORIZED_SEND",
+  "approvalRequestId": "appr_1791063310342_yweq",
+  "approvedByUser": true,
+  "externalApiStatus": "REQUIRES_APPROVAL",
+  "mailtoOrIntentUrl": "mailto:?subject=%5BDEMO%20%2F%20SAMPLE%5D%20Mobile%20Website%20Preview%20Prepared%20for%20Sylhet%20Royal%20Timber%20Crafts%20(Sylhet)&body=Hello%20Sylhet%20Royal%20Timber%20Crafts%20Team%2C%0A%0AWe%20researched%20custom%20furniture%20%26%20woodwork%20businesses%20in%20Sylhet%20and%20created%20a%20live%2C%20mobile-responsive%20DEMO%20%2F%20SAMPLE%20website%20preview%20tailored%20for%20Sylhet%20Royal%20Timber%20Crafts.%0A%0ALive%20Demo%20Preview%3A%20%2Fapi%2Fpart14%2Ffiles%2Fp14_biz_1791063310269%2Fdemo_site_sylhet_royal_timber_craft_1791063310335.html%0AKey%20Highlights%3A%20Upgrade%20to%20HTTPS%20for%20customer%20trust%2C%20Add%20SEO-optimized%20page%20title%0A%0APlease%20let%20us%20know%20if%20you%20would%20like%20to%20review%20or%20customize%20this%20sample.%0A%0ABest%20regards%2C%0AFRIDAY%20Digital%20Operations",
+  "reason": "Paused at Approval Gate (USER_REVIEW / APPROVAL). Never sends outreach without user authorization.",
+  "timestamp": 1791063310342
+}
