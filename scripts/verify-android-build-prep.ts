@@ -130,8 +130,13 @@ check(
 const mainActivity = fs.readFileSync(path.join(javaDir, 'MainActivity.kt'), 'utf8');
 check(
   mainActivity.includes('addJavascriptInterface(bridge, "FridayAndroidBridge")') &&
-    mainActivity.includes('file:///android_asset/dist/index.html'),
-  '6. MainActivity.kt connects WebView, injects FridayAndroidBridge, and supports bundled/hosted FRIDAY UI'
+    mainActivity.includes('https://appassets.androidplatform.net/assets/dist/index.html') &&
+    !mainActivity.includes('ais-dev-'),
+  '6. MainActivity.kt connects WebView, injects FridayAndroidBridge, and loads bundled FRIDAY UI locally without Google redirect'
+);
+check(
+  fs.existsSync(path.join(appDir, 'src/main/assets/dist/index.html')),
+  '6b. Bundled local FRIDAY UI assets (android/app/src/main/assets/dist/index.html) exist'
 );
 
 // 7. Existing voice system is preserved

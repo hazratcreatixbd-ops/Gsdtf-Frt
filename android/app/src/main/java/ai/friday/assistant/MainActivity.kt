@@ -5,10 +5,13 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
+import androidx.webkit.WebViewAssetLoader
 
 /**
  * PART 6B — FRIDAY Android Native Main Activity
@@ -27,6 +30,12 @@ class MainActivity : AppCompatActivity() {
         permissionHelper = PermissionHelper(this)
         permissionHelper.requestNotificationPermission()
 
+        // Serve bundled local FRIDAY web assets over a secure virtual origin (https://appassets.androidplatform.net)
+        // so ES modules, Tailwind CSS, localStorage, and Web Audio API work locally without any external Google redirect.
+        val assetLoader = WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+
         webView = WebView(this).apply {
             settings.apply {
                 javaScriptEnabled = true
@@ -34,6 +43,11 @@ class MainActivity : AppCompatActivity() {
                 databaseEnabled = true
                 mediaPlaybackRequiresUserGesture = false
                 allowFileAccess = true
+                allowContentAccess = true
+                @Suppress("DEPRECATION")
+                allowFileAccessFromFileURLs = true
+                @Suppress("DEPRECATION")
+                allowUniversalAccessFromFileURLs = true
                 cacheMode = WebSettings.LOAD_DEFAULT
                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             }
@@ -53,6 +67,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             webViewClient = object : WebViewClient() {
+                override fun shouldInterceptRequest(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): WebResourceResponse? {
+                    val uri = request?.url ?: return null
+                    return assetLoader.shouldInterceptRequest(uri)
+                }
+
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                     // Signal to web that native device wrapper is fully attached and ready
@@ -73,18 +95,13 @@ class MainActivity : AppCompatActivity() {
         // Request initial microphone permission if needed
         permissionHelper.requestRecordAudioPermission {}
 
-        // Load FRIDAY Web App:
-        // Supports intent override, bundled offline web assets (file:///android_asset/dist/index.html), or hosted server:
+        // Load FRIDAY Web App locally first from bundled APK assets (never redirect startup to an unauthorized Google page):
+        // Uses https://appassets.androidplatform.net/assets/dist/index.html mapped directly to file:///android_asset/dist/index.html
         val customUrl = intent.getStringExtra("app_url")
-        val hasBundledAssets = try {
-            assets.list("dist")?.contains("index.html") == true
-        } catch (e: Exception) {
-            false
-        }
-        val appUrl = when {
-            !customUrl.isNullOrBlank() -> customUrl
-            hasBundledAssets -> "file:///android_asset/dist/index.html"
-            else -> "https://ais-dev-y34kxoace7g7txsixtaqn5-87869525848.asia-southeast1.run.app"
+        val appUrl = if (!customUrl.isNullOrBlank()) {
+            customUrl
+        } else {
+            "https://appassets.androidplatform.net/assets/dist/index.html"
         }
         webView.loadUrl(appUrl)
     }

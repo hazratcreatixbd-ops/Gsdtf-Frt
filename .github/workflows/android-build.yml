@@ -32,6 +32,9 @@ jobs:
         run: |
           npm ci || npm install
           npm run build
+          mkdir -p android/app/src/main/assets/dist
+          cp -r dist/* android/app/src/main/assets/dist/
+          test -f android/app/src/main/assets/dist/index.html
 
       - name: Prepare Gradle Wrapper
         run: |

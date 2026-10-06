@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.35"/>
+      <stop offset="45%" stop-color="#0284C7" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#030712" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67E8F9"/>
+      <stop offset="50%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ECFEFF"/>
+      <stop offset="40%" stop-color="#22D3EE"/>
+      <stop offset="80%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#030712" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#030712"/>
+  <circle cx="256" cy="256" r="220" fill="url(#bgGlow)"/>
+  <!-- Outer precision ring -->
+  <circle cx="256" cy="256" r="196" fill="none" stroke="url(#ringGrad)" stroke-width="4" stroke-opacity="0.45"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#22D3EE" stroke-width="6" stroke-dasharray="64 28 24 28" stroke-linecap="round"/>
+  <!-- Mid geometric ring -->
+  <circle cx="256" cy="256" r="142" fill="#071324" fill-opacity="0.85" stroke="url(#ringGrad)" stroke-width="5"/>
+  <circle cx="256" cy="256" r="118" fill="none" stroke="#38BDF8" stroke-width="3" stroke-dasharray="18 14" stroke-opacity="0.75"/>
+  <!-- Inner energy core -->
+  <circle cx="256" cy="256" r="88" fill="url(#coreGlow)" opacity="0.4"/>
+  <circle cx="256" cy="256" r="76" fill="#04101E" stroke="#67E8F9" stroke-width="4"/>
+  <!-- Sleek geometric 'F' emblem in center -->
+  <path d="M228 210 H292 L284 226 H246 V248 H278 L270 264 H246 V302 H228 Z" fill="#ECFEFF"/>
+</svg>

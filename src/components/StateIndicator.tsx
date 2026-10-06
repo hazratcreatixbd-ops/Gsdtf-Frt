@@ -3,6 +3,7 @@ import { FridayState } from '../types/friday';
 import { Info, Bookmark, Smartphone, Briefcase, Bot, Building2, Compass } from 'lucide-react';
 import { androidBridge } from '../services/AndroidBridge/AndroidBridge';
 import { businessWorkflowEngine } from '../services/BusinessWorkflowEngine';
+import fridayLogo from '../assets/images/friday_ai_logo_1791304809584.jpg';
 
 interface StateIndicatorProps {
   state: FridayState;
@@ -82,8 +83,13 @@ export const StateIndicator: React.FC<StateIndicatorProps> = ({
     <header className="w-full flex items-center justify-between px-4 sm:px-6 pt-4 pb-2 z-20 max-w-2xl mx-auto">
       {/* Brand */}
       <div className="flex items-center space-x-2.5 shrink-0">
-        <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-rose-500/20 border border-cyan-500/30 backdrop-blur-md">
-          <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
+        <div className="relative flex items-center justify-center w-9 h-9 rounded-xl overflow-hidden bg-slate-950 border border-cyan-400/40 shadow-[0_0_14px_rgba(6,182,212,0.35)]">
+          <img
+            src={fridayLogo}
+            alt="FRIDAY AI Core Logo"
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div>
           <h1 className="text-sm font-bold tracking-widest text-slate-100 font-mono">

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { FridayState } from '../types/friday';
-import { Mic, MicOff, Power, Hand } from 'lucide-react';
+import { Mic, MicOff, Hand } from 'lucide-react';
 
 interface FridayCoreProps {
   state: FridayState;
@@ -294,8 +294,13 @@ export const FridayCore: React.FC<FridayCoreProps> = ({
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           {state === 'disconnected' && (
             <div className="flex flex-col items-center">
-              <div className="w-14 h-14 rounded-full border border-cyan-400/50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center text-cyan-300 shadow-[0_0_25px_rgba(0,195,255,0.35)] transition-all group-hover:scale-105">
-                <Power className="w-6 h-6 text-cyan-300" />
+              <div className="w-14 h-14 rounded-full border border-cyan-400/50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center text-cyan-300 shadow-[0_0_25px_rgba(0,195,255,0.35)] transition-all group-hover:scale-105 overflow-hidden">
+                <img
+                  src="./friday-logo.svg"
+                  alt="FRIDAY Core"
+                  referrerPolicy="no-referrer"
+                  className="w-11 h-11 object-contain rounded-full"
+                />
               </div>
               <span className="mt-3 text-[11px] font-mono tracking-widest text-cyan-300/90 uppercase font-semibold">
                 Tap to Awaken
