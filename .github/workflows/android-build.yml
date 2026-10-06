@@ -46,15 +46,33 @@ jobs:
       - name: Build Android Debug APK
         working-directory: android
         run: |
-          ./gradlew assembleDebug --stacktrace --no-daemon
+          ./gradlew :app:assembleDebug --stacktrace --no-daemon
 
       - name: Verify APK Generated
         run: |
-          if [ -f android/app/build/outputs/apk/debug/app-debug.apk ]; then
-            echo "✅ APK generated successfully at android/app/build/outputs/apk/debug/app-debug.apk"
-            ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          echo "Inspecting Gradle build outputs under android/..."
+          ACTUAL_APK=$(find android -type f -name "*-debug.apk" | head -n 1)
+          if [ -z "$ACTUAL_APK" ]; then
+            ACTUAL_APK=$(find android -type f -name "*.apk" | head -n 1)
+          fi
+          if [ -z "$ACTUAL_APK" ]; then
+            echo "❌ No APK file found anywhere under android/!"
+            find android/app/build -maxdepth 4 2>/dev/null || true
+            exit 1
+          fi
+          echo "Actual Gradle APK output path: $ACTUAL_APK"
+          TARGET_APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          mkdir -p "$(dirname "$TARGET_APK")"
+          if [ "$ACTUAL_APK" != "$TARGET_APK" ]; then
+            echo "Normalizing APK from $ACTUAL_APK to $TARGET_APK..."
+            cp -f "$ACTUAL_APK" "$TARGET_APK"
+          fi
+          if [ -s "$TARGET_APK" ]; then
+            APK_SIZE=$(stat -c%s "$TARGET_APK" 2>/dev/null || wc -c < "$TARGET_APK")
+            echo "✅ APK verified at $TARGET_APK (Size: ${APK_SIZE} bytes)"
+            ls -lh "$TARGET_APK"
           else
-            echo "❌ APK file not found!"
+            echo "❌ APK file is missing or zero bytes at $TARGET_APK!"
             exit 1
           fi
 
