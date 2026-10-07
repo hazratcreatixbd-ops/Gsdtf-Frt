@@ -18,14 +18,14 @@ export const MissionBanner: React.FC<MissionBannerProps> = ({ workflow, onOpenWo
   return (
     <div
       onClick={onOpenWorkflowDetails}
-      className="cursor-pointer p-2.5 sm:p-3 rounded-2xl border border-cyan-500/30 bg-slate-950/70 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono transition-all hover:border-cyan-500/60"
+      className="w-full max-w-full min-w-0 cursor-pointer p-2.5 sm:p-3 rounded-2xl border border-cyan-500/30 bg-slate-950/70 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono transition-all hover:border-cyan-500/60"
     >
-      <div className="flex items-center space-x-3">
-        <div className="p-2 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-400">
+      <div className="flex items-start sm:items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1">
+        <div className="p-2 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-400 shrink-0">
           <Target className="w-4 h-4" />
         </div>
-        <div>
-          <div className="flex items-center space-x-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">CURRENT MISSION</span>
             <span
               className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
@@ -41,17 +41,19 @@ export const MissionBanner: React.FC<MissionBannerProps> = ({ workflow, onOpenWo
               {status}
             </span>
           </div>
-          <div className="font-bold text-white text-xs truncate max-w-md">{missionName}</div>
+          <div className="font-bold text-white text-xs break-words [overflow-wrap:anywhere] mt-0.5">
+            {missionName}
+          </div>
         </div>
       </div>
 
       {/* Progress & Lead Worker */}
-      <div className="flex items-center space-x-4 text-[11px] self-end sm:self-center">
-        <div>
-          <span className="text-slate-500 text-[10px] block">LEAD AGENT</span>
-          <span className="text-slate-200">{leadWorker}</span>
+      <div className="flex items-center justify-between sm:justify-end space-x-4 text-[11px] w-full sm:w-auto pt-1.5 sm:pt-0 border-t sm:border-t-0 border-slate-800/70 shrink-0">
+        <div className="min-w-0">
+          <span className="text-slate-500 text-[9px] sm:text-[10px] block">LEAD AGENT</span>
+          <span className="text-slate-200 truncate block">{leadWorker}</span>
         </div>
-        <div className="min-w-[100px] space-y-1">
+        <div className="w-28 sm:min-w-[100px] space-y-1 shrink-0">
           <div className="flex justify-between text-[10px]">
             <span className="text-slate-500">PROGRESS</span>
             <span className="text-cyan-400 font-bold">{progress}%</span>

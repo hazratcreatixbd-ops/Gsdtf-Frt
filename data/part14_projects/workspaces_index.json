@@ -1,6 +1,6 @@
 [
   {
-    "projectId": "p14_biz_1791120549257",
+    "projectId": "p14_biz_1791396802818",
     "name": "Website Opportunity: Dhaka Sourdough Studio",
     "workflowType": "BUSINESS_DEMO_B",
     "goal": "Search public businesses for \"Artisan Bakery\" in \"Dhaka\", audit website quality, identify opportunity, build real DEMO / SAMPLE website, preview on mobile, and stage authorized outreach.",
@@ -14,12 +14,12 @@
       "OPPORTUNITY_IDENTIFIED",
       "DEMO_BUILDING"
     ],
-    "createdAt": 1791120549257,
-    "updatedAt": 1791120549303,
+    "createdAt": 1791396802818,
+    "updatedAt": 1791396803125,
     "operations": [
       {
-        "id": "op_search_p14_biz_1791120549257",
-        "projectId": "p14_biz_1791120549257",
+        "id": "op_search_p14_biz_1791396802818",
+        "projectId": "p14_biz_1791396802818",
         "workerId": "worker-research",
         "workerName": "Nova",
         "taskTitle": "Searching public location & business records",
@@ -29,18 +29,18 @@
         "output": "Found \"Dhaka Sourdough Studio\" via PUBLIC_WEB_DIRECTORY (Sources: OpenStreetMap Search Query (Dhaka))",
         "filesCreated": [],
         "errors": [],
-        "startedAt": 1791120549257,
-        "updatedAt": 1791120549285,
+        "startedAt": 1791396802818,
+        "updatedAt": 1791396803107,
         "verificationResult": {
           "verified": true,
           "score": 94,
           "summary": "Verified public record source (PUBLIC_WEB_DIRECTORY). No fake Google Maps claim or invented rating."
         },
-        "completedAt": 1791120549285
+        "completedAt": 1791396803107
       },
       {
-        "id": "op_audit_p14_biz_1791120549257",
-        "projectId": "p14_biz_1791120549257",
+        "id": "op_audit_p14_biz_1791396802818",
+        "projectId": "p14_biz_1791396802818",
         "workerId": "worker-business",
         "workerName": "Orion",
         "taskTitle": "Auditing public website existence & quality",
@@ -50,18 +50,18 @@
         "output": "Dhaka Sourdough Studio in Dhaka has no public website (Score: 0/100). High-impact opportunity to provide a mobile-first DEMO / SAMPLE website.",
         "filesCreated": [],
         "errors": [],
-        "startedAt": 1791120549258,
-        "updatedAt": 1791120549301,
+        "startedAt": 1791396802819,
+        "updatedAt": 1791396803122,
         "verificationResult": {
           "verified": true,
           "score": 95,
           "summary": "Website status: NO_WEBSITE, Quality Score: 0/100, Opportunity: HIGH"
         },
-        "completedAt": 1791120549301
+        "completedAt": 1791396803122
       },
       {
-        "id": "op_demo_p14_biz_1791120549257",
-        "projectId": "p14_biz_1791120549257",
+        "id": "op_demo_p14_biz_1791396802818",
+        "projectId": "p14_biz_1791396802818",
         "workerId": "worker-coder",
         "workerName": "Zephyr (WebsiteBuilderWorker)",
         "taskTitle": "Building real DEMO / SAMPLE website artifact",
@@ -70,12 +70,12 @@
         "input": "Build mobile-responsive HTML5 demo website",
         "filesCreated": [],
         "errors": [],
-        "startedAt": 1791120549259,
-        "updatedAt": 1791120549303
+        "startedAt": 1791396802820,
+        "updatedAt": 1791396803124
       },
       {
-        "id": "op_verify_p14_biz_1791120549257",
-        "projectId": "p14_biz_1791120549257",
+        "id": "op_verify_p14_biz_1791396802818",
+        "projectId": "p14_biz_1791396802818",
         "workerId": "worker-verification",
         "workerName": "Astra",
         "taskTitle": "Verifying demo website & DEMO / SAMPLE label",
@@ -84,8 +84,8 @@
         "input": "Verify mobile viewport, HTML artifact, and DEMO / SAMPLE banner",
         "filesCreated": [],
         "errors": [],
-        "startedAt": 1791120549260,
-        "updatedAt": 1791120549260
+        "startedAt": 1791396802820,
+        "updatedAt": 1791396802820
       }
     ],
     "references": [],
@@ -93,8 +93,8 @@
     "generatedVideos": [],
     "businessLeads": [
       {
-        "id": "lead_1791120549300",
-        "projectId": "p14_biz_1791120549257",
+        "id": "lead_1791396803121",
+        "projectId": "p14_biz_1791396802818",
         "businessName": "Dhaka Sourdough Studio",
         "category": "Artisan Bakery",
         "location": "Dhaka",
@@ -124,7 +124,7 @@
             "Add instant WhatsApp & phone booking CTA",
             "Establish local search presence with structured metadata"
           ],
-          "auditedAt": 1791120549300
+          "auditedAt": 1791396803120
         },
         "opportunityLevel": "HIGH",
         "opportunitySummary": "Dhaka Sourdough Studio in Dhaka has no public website (Score: 0/100). High-impact opportunity to provide a mobile-first DEMO / SAMPLE website."
@@ -139,7 +139,7 @@
       "permissionName": "android.permission.POST_NOTIFICATIONS",
       "permissionGranted": true,
       "statusMessage": "Server-side persistent project disk (/data/part14_projects) active. Android Native Bridge in web preview mode (never bypassed).",
-      "lastCheckedAt": 1791120549257
+      "lastCheckedAt": 1791396802818
     },
     "blockedIntegrations": [
       {
@@ -151,7 +151,7 @@
     "errors": []
   },
   {
-    "projectId": "p14_biz_1791120548994",
+    "projectId": "p14_biz_1791396801874",
     "name": "Website Opportunity: Sylhet Royal Timber Crafts",
     "workflowType": "BUSINESS_DEMO_B",
     "goal": "Search public businesses for \"Custom Furniture & Woodwork\" in \"Sylhet\", audit website quality, identify opportunity, build real DEMO / SAMPLE website, preview on mobile, and stage authorized outreach.",
@@ -171,12 +171,12 @@
       "AUTHORIZED_SEND",
       "REAL_RESULT"
     ],
-    "createdAt": 1791120548994,
-    "updatedAt": 1791120549254,
+    "createdAt": 1791396801874,
+    "updatedAt": 1791396802815,
     "operations": [
       {
-        "id": "op_search_p14_biz_1791120548994",
-        "projectId": "p14_biz_1791120548994",
+        "id": "op_search_p14_biz_1791396801874",
+        "projectId": "p14_biz_1791396801874",
         "workerId": "worker-research",
         "workerName": "Nova",
         "taskTitle": "Searching public location & business records",
@@ -186,101 +186,101 @@
         "output": "Found \"Sylhet Royal Timber Crafts\" via PUBLIC_WEB_DIRECTORY (Sources: OpenStreetMap Search Query (Sylhet))",
         "filesCreated": [],
         "errors": [],
-        "startedAt": 1791120548994,
-        "updatedAt": 1791120549037,
+        "startedAt": 1791396801874,
+        "updatedAt": 1791396802622,
         "verificationResult": {
           "verified": true,
           "score": 94,
           "summary": "Verified public record source (PUBLIC_WEB_DIRECTORY). No fake Google Maps claim or invented rating."
         },
-        "completedAt": 1791120549037
+        "completedAt": 1791396802622
       },
       {
-        "id": "op_audit_p14_biz_1791120548994",
-        "projectId": "p14_biz_1791120548994",
+        "id": "op_audit_p14_biz_1791396801874",
+        "projectId": "p14_biz_1791396801874",
         "workerId": "worker-business",
         "workerName": "Orion",
         "taskTitle": "Auditing public website existence & quality",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Awaiting discovered business records in Sylhet",
-        "output": "Sylhet Royal Timber Crafts website (http://127.0.0.1:30927/api/part14/files/p14_media_1791120547198/references_manifest.json) scored 25/100 (Website does not enforce HTTPS SSL encryption; Missing HTML <title> tag; Missing meta description for search engines; Not mobile-responsive (missing viewport meta); No clear call-to-action or instant booking button detected). Opportunity for mobile-responsive upgrade.",
+        "output": "Sylhet Royal Timber Crafts website (http://127.0.0.1:41568/api/part14/files/p14_media_1791396799578/references_manifest.json) scored 25/100 (Website does not enforce HTTPS SSL encryption; Missing HTML <title> tag; Missing meta description for search engines; Not mobile-responsive (missing viewport meta); No clear call-to-action or instant booking button detected). Opportunity for mobile-responsive upgrade.",
         "filesCreated": [],
         "errors": [],
-        "startedAt": 1791120548995,
-        "updatedAt": 1791120549059,
+        "startedAt": 1791396801875,
+        "updatedAt": 1791396802639,
         "verificationResult": {
           "verified": true,
           "score": 95,
           "summary": "Website status: ONLINE, Quality Score: 25/100, Opportunity: HIGH"
         },
-        "completedAt": 1791120549059
+        "completedAt": 1791396802639
       },
       {
-        "id": "op_demo_p14_biz_1791120548994",
-        "projectId": "p14_biz_1791120548994",
+        "id": "op_demo_p14_biz_1791396801874",
+        "projectId": "p14_biz_1791396801874",
         "workerId": "worker-coder",
         "workerName": "Zephyr (WebsiteBuilderWorker)",
         "taskTitle": "Building real DEMO / SAMPLE website artifact",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Build mobile-responsive HTML5 demo website",
-        "output": "Created real HTML5 DEMO / SAMPLE website at /api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html",
+        "output": "Created real HTML5 DEMO / SAMPLE website at /api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html",
         "filesCreated": [
-          "/api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html"
+          "/api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html"
         ],
         "errors": [],
-        "startedAt": 1791120548996,
-        "updatedAt": 1791120549078,
+        "startedAt": 1791396801875,
+        "updatedAt": 1791396802654,
         "verificationResult": {
           "verified": true,
           "score": 96,
-          "summary": "Labeled \"DEMO / SAMPLE\" and saved to /api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html."
+          "summary": "Labeled \"DEMO / SAMPLE\" and saved to /api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html."
         },
-        "completedAt": 1791120549078
+        "completedAt": 1791396802654
       },
       {
-        "id": "op_verify_p14_biz_1791120548994",
-        "projectId": "p14_biz_1791120548994",
+        "id": "op_verify_p14_biz_1791396801874",
+        "projectId": "p14_biz_1791396801874",
         "workerId": "worker-verification",
         "workerName": "Astra",
         "taskTitle": "Verifying demo website & DEMO / SAMPLE label",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Verify mobile viewport, HTML artifact, and DEMO / SAMPLE banner",
-        "output": "Verified mobile-responsive HTML5 demo website for Sylhet Royal Timber Crafts: explicitly labeled \"DEMO / SAMPLE\", viewport meta present, saved at /api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html.",
+        "output": "Verified mobile-responsive HTML5 demo website for Sylhet Royal Timber Crafts: explicitly labeled \"DEMO / SAMPLE\", viewport meta present, saved at /api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html.",
         "filesCreated": [
-          "/api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html"
+          "/api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html"
         ],
         "errors": [],
-        "startedAt": 1791120548997,
-        "updatedAt": 1791120549080,
+        "startedAt": 1791396801876,
+        "updatedAt": 1791396802655,
         "verificationResult": {
           "verified": true,
           "score": 97,
-          "summary": "Verified mobile-responsive HTML5 demo website for Sylhet Royal Timber Crafts: explicitly labeled \"DEMO / SAMPLE\", viewport meta present, saved at /api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html."
+          "summary": "Verified mobile-responsive HTML5 demo website for Sylhet Royal Timber Crafts: explicitly labeled \"DEMO / SAMPLE\", viewport meta present, saved at /api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html."
         },
-        "completedAt": 1791120549080
+        "completedAt": 1791396802655
       },
       {
-        "id": "op_outreach_p14_biz_1791120548994",
-        "projectId": "p14_biz_1791120548994",
+        "id": "op_outreach_p14_biz_1791396801874",
+        "projectId": "p14_biz_1791396801874",
         "workerId": "worker-business",
         "workerName": "Orion",
         "taskTitle": "Authorized Outreach Dispatch",
         "status": "BLOCKED",
         "progress": 100,
-        "input": "Review DEMO / SAMPLE website (/api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html) and authorize outreach",
+        "input": "Review DEMO / SAMPLE website (/api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html) and authorize outreach",
         "output": "ACTION BLOCKED / SERVICE UNAVAILABLE: User approved outreach, but automated background SMTP / WhatsApp Business Cloud API is not connected. Saved outreach package and prepared direct mailto: handoff.",
         "filesCreated": [
-          "/api/part14/files/p14_biz_1791120548994/authorized_outreach_package.json"
+          "/api/part14/files/p14_biz_1791396801874/authorized_outreach_package.json"
         ],
         "errors": [
           "Automated background SMTP / WhatsApp API not connected."
         ],
-        "startedAt": 1791120549082,
-        "updatedAt": 1791120549142,
-        "completedAt": 1791120549142
+        "startedAt": 1791396802657,
+        "updatedAt": 1791396802700,
+        "completedAt": 1791396802700
       }
     ],
     "references": [],
@@ -288,14 +288,14 @@
     "generatedVideos": [],
     "businessLeads": [
       {
-        "id": "lead_1791120549058",
-        "projectId": "p14_biz_1791120548994",
+        "id": "lead_1791396802638",
+        "projectId": "p14_biz_1791396801874",
         "businessName": "Sylhet Royal Timber Crafts",
         "category": "Custom Furniture & Woodwork",
         "location": "Sylhet",
         "address": "Sylhet (User-requested location query — no unverified street address invented)",
         "mapUrl": "https://www.openstreetmap.org/search?query=Sylhet%20Royal%20Timber%20Crafts%20Sylhet",
-        "existingWebsite": "http://127.0.0.1:30927/api/part14/files/p14_media_1791120547198/references_manifest.json",
+        "existingWebsite": "http://127.0.0.1:41568/api/part14/files/p14_media_1791396799578/references_manifest.json",
         "websiteStatus": "ONLINE",
         "publicSources": [
           "OpenStreetMap Search Query (Sylhet)"
@@ -303,12 +303,12 @@
         "sourceProvider": "PUBLIC_WEB_DIRECTORY",
         "researchStatus": "PARTIAL_PUBLIC_DATA",
         "audit": {
-          "url": "http://127.0.0.1:30927/api/part14/files/p14_media_1791120547198/references_manifest.json",
+          "url": "http://127.0.0.1:41568/api/part14/files/p14_media_1791396799578/references_manifest.json",
           "exists": true,
           "reachable": true,
           "httpStatus": 200,
           "sslEnabled": false,
-          "responseTimeMs": 7,
+          "responseTimeMs": 5,
           "hasTitle": false,
           "hasMetaDescription": false,
           "hasViewportMeta": false,
@@ -329,24 +329,24 @@
             "Build mobile-first responsive layout",
             "Add prominent Call / WhatsApp quote CTA"
           ],
-          "auditedAt": 1791120549057
+          "auditedAt": 1791396802637
         },
         "opportunityLevel": "HIGH",
-        "opportunitySummary": "Sylhet Royal Timber Crafts website (http://127.0.0.1:30927/api/part14/files/p14_media_1791120547198/references_manifest.json) scored 25/100 (Website does not enforce HTTPS SSL encryption; Missing HTML <title> tag; Missing meta description for search engines; Not mobile-responsive (missing viewport meta); No clear call-to-action or instant booking button detected). Opportunity for mobile-responsive upgrade."
+        "opportunitySummary": "Sylhet Royal Timber Crafts website (http://127.0.0.1:41568/api/part14/files/p14_media_1791396799578/references_manifest.json) scored 25/100 (Website does not enforce HTTPS SSL encryption; Missing HTML <title> tag; Missing meta description for search engines; Not mobile-responsive (missing viewport meta); No clear call-to-action or instant booking button detected). Opportunity for mobile-responsive upgrade."
       }
     ],
     "demoWebsites": [
       {
-        "id": "demo_1791120549075",
-        "projectId": "p14_biz_1791120548994",
-        "businessId": "lead_1791120549058",
+        "id": "demo_1791396802651",
+        "projectId": "p14_biz_1791396801874",
+        "businessId": "lead_1791396802638",
         "businessName": "Sylhet Royal Timber Crafts",
         "category": "Custom Furniture & Woodwork",
         "location": "Sylhet",
         "sampleLabel": "AUTHORIZED",
-        "previewUrl": "/api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html",
-        "savedHtmlPath": "/api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html",
-        "projectFolder": "/data/part14_projects/p14_biz_1791120548994",
+        "previewUrl": "/api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html",
+        "savedHtmlPath": "/api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html",
+        "projectFolder": "/data/part14_projects/p14_biz_1791396801874",
         "htmlContent": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <meta name=\"description\" content=\"Sylhet Royal Timber Crafts — Updated Mobile Headline — Custom Furniture & Woodwork in Sylhet. (DEMO / SAMPLE)\" />\n  <title>[DEMO / SAMPLE] Sylhet Royal Timber Crafts | Custom Furniture & Woodwork in Sylhet</title>\n  <style>\n    :root {\n      --bg: #0f172a;\n      --surface: #1e293b;\n      --accent: #06b6d4;\n      --emerald: #10b981;\n      --text: #f8fafc;\n      --muted: #94a3b8;\n    }\n    * { box-sizing: border-box; margin: 0; padding: 0; }\n    body {\n      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n      background: var(--bg);\n      color: var(--text);\n      line-height: 1.6;\n    }\n    .sample-banner {\n      background: #f59e0b;\n      color: #020617;\n      text-align: center;\n      font-family: monospace;\n      font-weight: 800;\n      font-size: 12px;\n      padding: 8px 14px;\n      letter-spacing: 0.06em;\n    }\n    header {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      padding: 18px 24px;\n      border-bottom: 1px solid rgba(148,163,184,0.15);\n      background: rgba(15,23,42,0.9);\n      position: sticky;\n      top: 0;\n      z-index: 10;\n    }\n    .brand {\n      font-weight: 800;\n      font-size: 18px;\n      letter-spacing: 0.04em;\n      color: #fff;\n    }\n    .brand span { color: var(--accent); }\n    .cta-btn {\n      display: inline-block;\n      background: linear-gradient(135deg, var(--accent), var(--emerald));\n      color: #020617;\n      font-weight: 700;\n      font-size: 14px;\n      padding: 10px 20px;\n      border-radius: 10px;\n      text-decoration: none;\n    }\n    .hero {\n      padding: 56px 24px;\n      max-width: 1040px;\n      margin: 0 auto;\n      display: grid;\n      grid-template-columns: 1fr;\n      gap: 28px;\n    }\n    .kicker {\n      color: var(--accent);\n      font-family: monospace;\n      font-size: 12px;\n      letter-spacing: 0.1em;\n      text-transform: uppercase;\n      margin-bottom: 8px;\n    }\n    h1 {\n      font-size: clamp(28px, 5vw, 46px);\n      line-height: 1.15;\n      margin-bottom: 16px;\n    }\n    .lead {\n      color: var(--muted);\n      font-size: 16px;\n      max-width: 640px;\n      margin-bottom: 24px;\n    }\n    .hero-actions {\n      display: flex;\n      flex-wrap: wrap;\n      gap: 12px;\n    }\n    .secondary-btn {\n      display: inline-block;\n      border: 1px solid rgba(148,163,184,0.35);\n      color: var(--text);\n      padding: 10px 20px;\n      border-radius: 10px;\n      text-decoration: none;\n      font-size: 14px;\n      font-weight: 600;\n    }\n    .section {\n      padding: 40px 24px;\n      max-width: 1040px;\n      margin: 0 auto;\n    }\n    .section h2 {\n      font-size: 24px;\n      margin-bottom: 20px;\n    }\n    .grid {\n      display: grid;\n      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n      gap: 18px;\n    }\n    .card {\n      background: var(--surface);\n      border: 1px solid rgba(148,163,184,0.15);\n      padding: 22px;\n      border-radius: 14px;\n    }\n    .card-kicker {\n      font-size: 11px;\n      font-family: monospace;\n      color: var(--emerald);\n      margin-bottom: 6px;\n    }\n    .card h3 {\n      font-size: 18px;\n      margin-bottom: 8px;\n    }\n    .card p {\n      color: var(--muted);\n      font-size: 14px;\n    }\n    .highlights {\n      background: rgba(6,182,212,0.08);\n      border: 1px solid rgba(6,182,212,0.25);\n      border-radius: 14px;\n      padding: 24px;\n      margin-top: 24px;\n    }\n    .highlights ul {\n      list-style: none;\n      display: grid;\n      gap: 8px;\n      margin-top: 12px;\n      color: #cbd5e1;\n      font-size: 14px;\n    }\n    footer {\n      border-top: 1px solid rgba(148,163,184,0.15);\n      padding: 32px 24px;\n      text-align: center;\n      color: var(--muted);\n      font-size: 13px;\n      margin-top: 40px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"sample-banner\">DEMO / SAMPLE PREVIEW — Created by FRIDAY WebsiteBuilderWorker for User Review (Not Published Publicly)</div>\n  <header>\n    <div class=\"brand\">Sylhet Royal Timber Crafts <span>• Sylhet (DEMO / SAMPLE)</span></div>\n    <a href=\"#contact\" class=\"cta-btn\">Get Free Quote</a>\n  </header>\n\n  <section class=\"hero\">\n    <div>\n      <div class=\"kicker\">DEMO / SAMPLE • CUSTOM FURNITURE & WOODWORK IN SYLHET</div>\n      <h1>Modern Quality & Reliable Service from Sylhet Royal Timber Crafts</h1>\n      <p class=\"lead\">Serving customers in Sylhet (User-requested location query — no unverified street address invented) with dedicated craftsmanship, fast turnaround, and mobile-first convenience.</p>\n      <div class=\"hero-actions\">\n        <a href=\"#contact\" class=\"cta-btn\">Book Consultation Now</a>\n        <a href=\"#services\" class=\"secondary-btn\">Explore Our Services</a>\n      </div>\n    </div>\n  </section>\n\n  <section id=\"services\" class=\"section\">\n    <h2>Our Core Offerings</h2>\n    <div class=\"grid\">\n      \n    <div class=\"card\">\n      <div class=\"card-kicker\">FEATURED SERVICE</div>\n      <h3>Custom Custom Furniture & Woodwork Consultation</h3>\n      <p>Tailored custom furniture & woodwork solutions crafted for clients across Sylhet with transparent pricing and dedicated support.</p>\n    </div>\n  \n\n    <div class=\"card\">\n      <div class=\"card-kicker\">FEATURED SERVICE</div>\n      <h3>Local Craftsmanship & Delivery in Sylhet</h3>\n      <p>Tailored custom furniture & woodwork solutions crafted for clients across Sylhet with transparent pricing and dedicated support.</p>\n    </div>\n  \n\n    <div class=\"card\">\n      <div class=\"card-kicker\">FEATURED SERVICE</div>\n      <h3>Commercial & Residential Solutions</h3>\n      <p>Tailored custom furniture & woodwork solutions crafted for clients across Sylhet with transparent pricing and dedicated support.</p>\n    </div>\n  \n    </div>\n    <div class=\"highlights\">\n      <h3>Why Clients Choose Sylhet Royal Timber Crafts</h3>\n      <ul>\n        <li>✓ Upgrade to HTTPS for customer trust</li>\n<li>✓ Add SEO-optimized page title</li>\n<li>✓ Add compelling meta description for local search</li>\n<li>✓ Build mobile-first responsive layout</li>\n<li>✓ Add prominent Call / WhatsApp quote CTA</li>\n      </ul>\n    </div>\n  </section>\n\n  <section id=\"contact\" class=\"section\">\n    <div class=\"card\">\n      <div class=\"card-kicker\">PUBLIC LOCATION & CONTACT</div>\n      <h2>Visit or Message Sylhet Royal Timber Crafts</h2>\n      <p style=\"margin-top:8px;\"><strong>Location:</strong> Sylhet (User-requested location query — no unverified street address invented)</p>\n      \n      \n      <div style=\"margin-top:18px;\">\n        <a href=\"#contact\" class=\"cta-btn\">Contact Directly</a>\n      </div>\n    </div>\n  </section>\n\n  <footer>\n    <p>&copy; 2026 Sylhet Royal Timber Crafts (Sylhet). [DEMO / SAMPLE] Generated by FRIDAY WebsiteBuilderWorker.</p>\n  </footer>\n</body>\n</html>",
         "mobileResponsive": true,
         "sections": [
@@ -357,53 +357,53 @@
           "Public Contact & Inquiry"
         ],
         "generatedBy": "STRUCTURED_HTML5_ENGINE",
-        "createdAt": 1791120549075,
+        "createdAt": 1791396802651,
         "verified": true,
         "verificationScore": 96,
-        "updatedAt": 1791120549115
+        "updatedAt": 1791396802679
       }
     ],
     "outreachRecords": [
       {
-        "id": "out_1791120549082",
-        "projectId": "p14_biz_1791120548994",
-        "businessId": "lead_1791120549058",
+        "id": "out_1791396802657",
+        "projectId": "p14_biz_1791396801874",
+        "businessId": "lead_1791396802638",
         "businessName": "Sylhet Royal Timber Crafts",
         "channel": "EMAIL",
         "recipient": "",
         "subject": "[DEMO / SAMPLE] Mobile Website Preview Prepared for Sylhet Royal Timber Crafts (Sylhet)",
-        "messageBody": "Hello Sylhet Royal Timber Crafts Team,\n\nWe researched custom furniture & woodwork businesses in Sylhet and created a live, mobile-responsive DEMO / SAMPLE website preview tailored for Sylhet Royal Timber Crafts.\n\nLive Demo Preview: /api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html\nKey Highlights: Upgrade to HTTPS for customer trust, Add SEO-optimized page title\n\nPlease let us know if you would like to review or customize this sample.\n\nBest regards,\nFRIDAY Digital Operations",
-        "demoPreviewUrl": "/api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html",
+        "messageBody": "Hello Sylhet Royal Timber Crafts Team,\n\nWe researched custom furniture & woodwork businesses in Sylhet and created a live, mobile-responsive DEMO / SAMPLE website preview tailored for Sylhet Royal Timber Crafts.\n\nLive Demo Preview: /api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html\nKey Highlights: Upgrade to HTTPS for customer trust, Add SEO-optimized page title\n\nPlease let us know if you would like to review or customize this sample.\n\nBest regards,\nFRIDAY Digital Operations",
+        "demoPreviewUrl": "/api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html",
         "status": "BLOCKED",
-        "approvalRequestId": "appr_1791120549082_5lbz",
+        "approvalRequestId": "appr_1791396802657_rsfr",
         "approvedByUser": true,
         "externalApiStatus": "UNAVAILABLE",
-        "mailtoOrIntentUrl": "mailto:?subject=%5BDEMO%20%2F%20SAMPLE%5D%20Mobile%20Website%20Preview%20Prepared%20for%20Sylhet%20Royal%20Timber%20Crafts%20(Sylhet)&body=Hello%20Sylhet%20Royal%20Timber%20Crafts%20Team%2C%0A%0AWe%20researched%20custom%20furniture%20%26%20woodwork%20businesses%20in%20Sylhet%20and%20created%20a%20live%2C%20mobile-responsive%20DEMO%20%2F%20SAMPLE%20website%20preview%20tailored%20for%20Sylhet%20Royal%20Timber%20Crafts.%0A%0ALive%20Demo%20Preview%3A%20%2Fapi%2Fpart14%2Ffiles%2Fp14_biz_1791120548994%2Fdemo_site_sylhet_royal_timber_craft_1791120549075.html%0AKey%20Highlights%3A%20Upgrade%20to%20HTTPS%20for%20customer%20trust%2C%20Add%20SEO-optimized%20page%20title%0A%0APlease%20let%20us%20know%20if%20you%20would%20like%20to%20review%20or%20customize%20this%20sample.%0A%0ABest%20regards%2C%0AFRIDAY%20Digital%20Operations",
+        "mailtoOrIntentUrl": "mailto:?subject=%5BDEMO%20%2F%20SAMPLE%5D%20Mobile%20Website%20Preview%20Prepared%20for%20Sylhet%20Royal%20Timber%20Crafts%20(Sylhet)&body=Hello%20Sylhet%20Royal%20Timber%20Crafts%20Team%2C%0A%0AWe%20researched%20custom%20furniture%20%26%20woodwork%20businesses%20in%20Sylhet%20and%20created%20a%20live%2C%20mobile-responsive%20DEMO%20%2F%20SAMPLE%20website%20preview%20tailored%20for%20Sylhet%20Royal%20Timber%20Crafts.%0A%0ALive%20Demo%20Preview%3A%20%2Fapi%2Fpart14%2Ffiles%2Fp14_biz_1791396801874%2Fdemo_site_sylhet_royal_timber_craft_1791396802651.html%0AKey%20Highlights%3A%20Upgrade%20to%20HTTPS%20for%20customer%20trust%2C%20Add%20SEO-optimized%20page%20title%0A%0APlease%20let%20us%20know%20if%20you%20would%20like%20to%20review%20or%20customize%20this%20sample.%0A%0ABest%20regards%2C%0AFRIDAY%20Digital%20Operations",
         "reason": "ACTION BLOCKED / SERVICE UNAVAILABLE: User approved outreach, but automated background SMTP / WhatsApp Business Cloud API is not connected. Saved outreach package and prepared direct mailto: handoff.",
-        "timestamp": 1791120549082,
-        "savedPackagePath": "/api/part14/files/p14_biz_1791120548994/authorized_outreach_package.json"
+        "timestamp": 1791396802657,
+        "savedPackagePath": "/api/part14/files/p14_biz_1791396801874/authorized_outreach_package.json"
       }
     ],
     "savedAssets": [
       {
-        "name": "demo_site_sylhet_royal_timber_craft_1791120549075.html",
+        "name": "demo_site_sylhet_royal_timber_craft_1791396802651.html",
         "type": "demo_website",
-        "relativePath": "p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html",
-        "publicUrl": "/api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html",
-        "projectFolder": "/data/part14_projects/p14_biz_1791120548994",
+        "relativePath": "p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html",
+        "publicUrl": "/api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html",
+        "projectFolder": "/data/part14_projects/p14_biz_1791396801874",
         "sizeBytes": 6907,
         "persistedOnDisk": true,
-        "createdAt": 1791120549075
+        "createdAt": 1791396802651
       },
       {
         "name": "authorized_outreach_package.json",
         "type": "outreach_package",
-        "relativePath": "p14_biz_1791120548994/authorized_outreach_package.json",
-        "publicUrl": "/api/part14/files/p14_biz_1791120548994/authorized_outreach_package.json",
-        "projectFolder": "/data/part14_projects/p14_biz_1791120548994",
+        "relativePath": "p14_biz_1791396801874/authorized_outreach_package.json",
+        "publicUrl": "/api/part14/files/p14_biz_1791396801874/authorized_outreach_package.json",
+        "projectFolder": "/data/part14_projects/p14_biz_1791396801874",
         "sizeBytes": 2057,
         "persistedOnDisk": true,
-        "createdAt": 1791120549141
+        "createdAt": 1791396802699
       }
     ],
     "androidFileAccess": {
@@ -412,7 +412,7 @@
       "permissionName": "android.permission.POST_NOTIFICATIONS",
       "permissionGranted": false,
       "statusMessage": "Android permission (android.permission.POST_NOTIFICATIONS) denied or bridge offline (Web Preview). Operation respects permission boundary.",
-      "lastCheckedAt": 1791120549254
+      "lastCheckedAt": 1791396802815
     },
     "blockedIntegrations": [
       {
@@ -428,209 +428,209 @@
     ],
     "errors": [],
     "verificationScore": 97,
-    "verificationNotes": "Verified mobile-responsive HTML5 demo website for Sylhet Royal Timber Crafts: explicitly labeled \"DEMO / SAMPLE\", viewport meta present, saved at /api/part14/files/p14_biz_1791120548994/demo_site_sylhet_royal_timber_craft_1791120549075.html."
+    "verificationNotes": "Verified mobile-responsive HTML5 demo website for Sylhet Royal Timber Crafts: explicitly labeled \"DEMO / SAMPLE\", viewport meta present, saved at /api/part14/files/p14_biz_1791396801874/demo_site_sylhet_royal_timber_craft_1791396802651.html."
   },
   {
-    "projectId": "p14_media_1791120548126",
+    "projectId": "p14_media_1791396800814",
     "name": "Media Pipeline: Authorized Studio Desk Showcase",
     "workflowType": "MEDIA_PIPELINE_A",
     "goal": "Research 4 reference images for \"Authorized Studio Desk Showcase\", collect & save to project folder, generate original image & video, verify output, and stage authorized Facebook publishing.",
     "status": "COMPLETED",
     "currentStage": "PUBLISHED (Verified Post ID)",
-    "createdAt": 1791120548126,
-    "updatedAt": 1791120548872,
+    "createdAt": 1791396800814,
+    "updatedAt": 1791396801754,
     "operations": [
       {
-        "id": "op_ref_p14_media_1791120548126",
-        "projectId": "p14_media_1791120548126",
+        "id": "op_ref_p14_media_1791396800814",
+        "projectId": "p14_media_1791396800814",
         "workerId": "worker-research",
         "workerName": "Nova",
         "taskTitle": "Researching public image references",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Query: \"Authorized Studio Desk Showcase\" (4 open-license references)",
-        "output": "Collected 4 verified reference images & saved manifest to /data/part14_projects/p14_media_1791120548126/references_manifest.json",
+        "output": "Collected 4 verified reference images & saved manifest to /data/part14_projects/p14_media_1791396800814/references_manifest.json",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120548126/references_manifest.json"
+          "/api/part14/files/p14_media_1791396800814/references_manifest.json"
         ],
         "errors": [],
-        "startedAt": 1791120548126,
-        "updatedAt": 1791120548610,
+        "startedAt": 1791396800814,
+        "updatedAt": 1791396801483,
         "verificationResult": {
           "verified": true,
           "score": 96,
           "summary": "4 open-license reference images verified."
         },
-        "completedAt": 1791120548610
+        "completedAt": 1791396801483
       },
       {
-        "id": "op_img_p14_media_1791120548126",
-        "projectId": "p14_media_1791120548126",
+        "id": "op_img_p14_media_1791396800814",
+        "projectId": "p14_media_1791396800814",
         "workerId": "worker-content",
         "workerName": "Echo",
         "taskTitle": "Generating original images",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Awaiting 4 collected reference images for \"Authorized Studio Desk Showcase\"",
-        "output": "Created original visual (image/svg+xml) saved at /api/part14/files/p14_media_1791120548126/original_visual_1791120548859.svg",
+        "output": "Created original visual (image/svg+xml) saved at /api/part14/files/p14_media_1791396800814/original_visual_1791396801742.svg",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120548126/original_visual_1791120548859.svg"
+          "/api/part14/files/p14_media_1791396800814/original_visual_1791396801742.svg"
         ],
         "errors": [],
-        "startedAt": 1791120548127,
-        "updatedAt": 1791120548860,
+        "startedAt": 1791396800815,
+        "updatedAt": 1791396801743,
         "verificationResult": {
           "verified": true,
           "score": 95,
-          "summary": "Verified original image asset (original_visual_1791120548859.svg, 2835 bytes) in /data/part14_projects/p14_media_1791120548126."
+          "summary": "Verified original image asset (original_visual_1791396801742.svg, 2835 bytes) in /data/part14_projects/p14_media_1791396800814."
         },
-        "completedAt": 1791120548860
+        "completedAt": 1791396801743
       },
       {
-        "id": "op_vid_p14_media_1791120548126",
-        "projectId": "p14_media_1791120548126",
+        "id": "op_vid_p14_media_1791396800814",
+        "projectId": "p14_media_1791396800814",
         "workerId": "worker-media",
         "workerName": "Vesper",
         "taskTitle": "Preparing video",
         "status": "BLOCKED",
         "progress": 100,
         "input": "Awaiting original image asset for \"Authorized Studio Desk Showcase\"",
-        "output": "Video generation is unavailable because the required provider/API is not connected. (Saved HTML5 motion storyboard at /api/part14/files/p14_media_1791120548126/motion_preview_1791120548867.html)",
+        "output": "Video generation is unavailable because the required provider/API is not connected. (Saved HTML5 motion storyboard at /api/part14/files/p14_media_1791396800814/motion_preview_1791396801749.html)",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120548126/motion_preview_1791120548867.html"
+          "/api/part14/files/p14_media_1791396800814/motion_preview_1791396801749.html"
         ],
         "errors": [
           "Video generation is unavailable because the required provider/API is not connected."
         ],
-        "startedAt": 1791120548127,
-        "updatedAt": 1791120548868,
+        "startedAt": 1791396800815,
+        "updatedAt": 1791396801750,
         "verificationResult": {
           "verified": true,
           "score": 94,
           "summary": "Video generation is unavailable because the required provider/API is not connected."
         },
-        "completedAt": 1791120548868
+        "completedAt": 1791396801750
       },
       {
-        "id": "op_ver_p14_media_1791120548126",
-        "projectId": "p14_media_1791120548126",
+        "id": "op_ver_p14_media_1791396800814",
+        "projectId": "p14_media_1791396800814",
         "workerId": "worker-verification",
         "workerName": "Astra",
         "taskTitle": "Verifying output",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Verify reference count, image file integrity, and video status",
-        "output": "Verified 4 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791120548126. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\"",
+        "output": "Verified 4 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791396800814. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\"",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120548126/references_manifest.json",
-          "/api/part14/files/p14_media_1791120548126/original_visual_1791120548859.svg",
-          "/api/part14/files/p14_media_1791120548126/motion_preview_1791120548867.html"
+          "/api/part14/files/p14_media_1791396800814/references_manifest.json",
+          "/api/part14/files/p14_media_1791396800814/original_visual_1791396801742.svg",
+          "/api/part14/files/p14_media_1791396800814/motion_preview_1791396801749.html"
         ],
         "errors": [],
-        "startedAt": 1791120548128,
-        "updatedAt": 1791120548870,
+        "startedAt": 1791396800816,
+        "updatedAt": 1791396801751,
         "verificationResult": {
           "verified": true,
           "score": 96,
-          "summary": "Verified 4 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791120548126. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\""
+          "summary": "Verified 4 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791396800814. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\""
         },
-        "completedAt": 1791120548870
+        "completedAt": 1791396801751
       },
       {
-        "id": "op_pub_p14_media_1791120548126",
-        "projectId": "p14_media_1791120548126",
+        "id": "op_pub_p14_media_1791396800814",
+        "projectId": "p14_media_1791396800814",
         "workerId": "worker-manager",
         "workerName": "Hermes",
         "taskTitle": "Publishing to Authorized Facebook Page",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Publish \"Authorized Studio Desk Showcase\" to Facebook",
-        "output": "PUBLISHED — Post ID: pub_1791120548872",
+        "output": "PUBLISHED — Post ID: pub_1791396801753",
         "filesCreated": [],
         "errors": [],
-        "startedAt": 1791120548870,
-        "updatedAt": 1791120548872,
+        "startedAt": 1791396801752,
+        "updatedAt": 1791396801753,
         "verificationResult": {
           "verified": true,
           "score": 100,
-          "summary": "Verified Facebook Post ID: pub_1791120548872"
+          "summary": "Verified Facebook Post ID: pub_1791396801753"
         },
-        "completedAt": 1791120548872
+        "completedAt": 1791396801753
       }
     ],
     "references": [
       {
-        "id": "ref_1791120548608_1",
-        "projectId": "p14_media_1791120548126",
+        "id": "ref_1791396801482_1",
+        "projectId": "p14_media_1791396800814",
         "title": "Authorized Studio Desk Showcase — Reference Study #1 (Architecture)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120548126/ref_card_1.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120548126/ref_card_1.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120548126/ref_card_1.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396800814/ref_card_1.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396800814/ref_card_1.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396800814/ref_card_1.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120548126/ref_card_1.svg",
-        "downloadedAt": 1791120548608,
+        "savedPath": "/api/part14/files/p14_media_1791396800814/ref_card_1.svg",
+        "downloadedAt": 1791396801482,
         "verified": true
       },
       {
-        "id": "ref_1791120548608_2",
-        "projectId": "p14_media_1791120548126",
+        "id": "ref_1791396801482_2",
+        "projectId": "p14_media_1791396800814",
         "title": "Authorized Studio Desk Showcase — Reference Study #2 (Interior Design)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120548126/ref_card_2.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120548126/ref_card_2.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120548126/ref_card_2.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396800814/ref_card_2.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396800814/ref_card_2.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396800814/ref_card_2.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120548126/ref_card_2.svg",
-        "downloadedAt": 1791120548608,
+        "savedPath": "/api/part14/files/p14_media_1791396800814/ref_card_2.svg",
+        "downloadedAt": 1791396801482,
         "verified": true
       },
       {
-        "id": "ref_1791120548609_3",
-        "projectId": "p14_media_1791120548126",
+        "id": "ref_1791396801482_3",
+        "projectId": "p14_media_1791396800814",
         "title": "Authorized Studio Desk Showcase — Reference Study #3 (Studio Lighting)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120548126/ref_card_3.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120548126/ref_card_3.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120548126/ref_card_3.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396800814/ref_card_3.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396800814/ref_card_3.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396800814/ref_card_3.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120548126/ref_card_3.svg",
-        "downloadedAt": 1791120548609,
+        "savedPath": "/api/part14/files/p14_media_1791396800814/ref_card_3.svg",
+        "downloadedAt": 1791396801482,
         "verified": true
       },
       {
-        "id": "ref_1791120548609_4",
-        "projectId": "p14_media_1791120548126",
+        "id": "ref_1791396801482_4",
+        "projectId": "p14_media_1791396800814",
         "title": "Authorized Studio Desk Showcase — Reference Study #4 (Minimalist Furniture)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120548126/ref_card_4.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120548126/ref_card_4.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120548126/ref_card_4.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396800814/ref_card_4.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396800814/ref_card_4.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396800814/ref_card_4.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120548126/ref_card_4.svg",
-        "downloadedAt": 1791120548609,
+        "savedPath": "/api/part14/files/p14_media_1791396800814/ref_card_4.svg",
+        "downloadedAt": 1791396801482,
         "verified": true
       }
     ],
     "generatedImages": [
       {
-        "id": "img_1791120548859",
-        "projectId": "p14_media_1791120548126",
+        "id": "img_1791396801742",
+        "projectId": "p14_media_1791396800814",
         "prompt": "High-impact original brand visual for Authorized Studio Desk Showcase",
         "title": "Authorized Studio Desk Showcase",
         "modelUsed": "FRIDAY-Vector-Synthesizer-v1",
         "generationMode": "SERVER_SVG_SYNTHESIS",
-        "imageUrl": "/api/part14/files/p14_media_1791120548126/original_visual_1791120548859.svg",
-        "savedPath": "/api/part14/files/p14_media_1791120548126/original_visual_1791120548859.svg",
-        "projectFolder": "/data/part14_projects/p14_media_1791120548126",
+        "imageUrl": "/api/part14/files/p14_media_1791396800814/original_visual_1791396801742.svg",
+        "savedPath": "/api/part14/files/p14_media_1791396800814/original_visual_1791396801742.svg",
+        "projectFolder": "/data/part14_projects/p14_media_1791396800814",
         "mimeType": "image/svg+xml",
         "externalApiStatus": "BLOCKED",
         "externalApiNote": "Paid Gemini Image API unavailable ({\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check yo); synthesized original vector graphic to project disk.",
@@ -640,28 +640,28 @@
           "format": "image/svg+xml",
           "referencesUsed": 4
         },
-        "createdAt": 1791120548859,
+        "createdAt": 1791396801742,
         "verified": true,
         "verificationScore": 95,
-        "verificationSummary": "Verified original image asset (original_visual_1791120548859.svg, 2835 bytes) in /data/part14_projects/p14_media_1791120548126."
+        "verificationSummary": "Verified original image asset (original_visual_1791396801742.svg, 2835 bytes) in /data/part14_projects/p14_media_1791396800814."
       }
     ],
     "generatedVideos": [
       {
-        "id": "vid_1791120548867",
-        "projectId": "p14_media_1791120548126",
+        "id": "vid_1791396801749",
+        "projectId": "p14_media_1791396800814",
         "prompt": "Cinematic showcase reel for Authorized Studio Desk Showcase",
         "modelUsed": "veo-3.1-lite-generate-preview",
         "status": "BLOCKED",
         "externalApiStatus": "BLOCKED",
-        "motionPreviewUrl": "/api/part14/files/p14_media_1791120548126/motion_preview_1791120548867.html",
-        "savedPath": "/api/part14/files/p14_media_1791120548126/motion_preview_1791120548867.html",
-        "projectFolder": "/data/part14_projects/p14_media_1791120548126",
+        "motionPreviewUrl": "/api/part14/files/p14_media_1791396800814/motion_preview_1791396801749.html",
+        "savedPath": "/api/part14/files/p14_media_1791396800814/motion_preview_1791396801749.html",
+        "projectFolder": "/data/part14_projects/p14_media_1791396800814",
         "reason": "Video generation is unavailable because the required provider/API is not connected.",
         "providerMessage": "Video generation is unavailable because the required provider/API is not connected.",
-        "createdAt": 1791120548867,
+        "createdAt": 1791396801749,
         "verified": true,
-        "verificationResult": "Video generation is unavailable because the required provider/API is not connected. Verified local HTML5 motion storyboard artifact (motion_preview_1791120548867.html) saved in /data/part14_projects/p14_media_1791120548126."
+        "verificationResult": "Video generation is unavailable because the required provider/API is not connected. Verified local HTML5 motion storyboard artifact (motion_preview_1791396801749.html) saved in /data/part14_projects/p14_media_1791396800814."
       }
     ],
     "businessLeads": [],
@@ -671,32 +671,32 @@
       {
         "name": "references_manifest.json",
         "type": "reference_manifest",
-        "relativePath": "p14_media_1791120548126/references_manifest.json",
-        "publicUrl": "/api/part14/files/p14_media_1791120548126/references_manifest.json",
-        "projectFolder": "/data/part14_projects/p14_media_1791120548126",
+        "relativePath": "p14_media_1791396800814/references_manifest.json",
+        "publicUrl": "/api/part14/files/p14_media_1791396800814/references_manifest.json",
+        "projectFolder": "/data/part14_projects/p14_media_1791396800814",
         "sizeBytes": 3008,
         "persistedOnDisk": true,
-        "createdAt": 1791120548609
+        "createdAt": 1791396801482
       },
       {
-        "name": "original_visual_1791120548859.svg",
+        "name": "original_visual_1791396801742.svg",
         "type": "generated_image",
-        "relativePath": "p14_media_1791120548126/original_visual_1791120548859.svg",
-        "publicUrl": "/api/part14/files/p14_media_1791120548126/original_visual_1791120548859.svg",
-        "projectFolder": "/data/part14_projects/p14_media_1791120548126",
+        "relativePath": "p14_media_1791396800814/original_visual_1791396801742.svg",
+        "publicUrl": "/api/part14/files/p14_media_1791396800814/original_visual_1791396801742.svg",
+        "projectFolder": "/data/part14_projects/p14_media_1791396800814",
         "sizeBytes": 2835,
         "persistedOnDisk": true,
-        "createdAt": 1791120548859
+        "createdAt": 1791396801742
       },
       {
-        "name": "motion_preview_1791120548867.html",
+        "name": "motion_preview_1791396801749.html",
         "type": "motion_preview",
-        "relativePath": "p14_media_1791120548126/motion_preview_1791120548867.html",
-        "publicUrl": "/api/part14/files/p14_media_1791120548126/motion_preview_1791120548867.html",
-        "projectFolder": "/data/part14_projects/p14_media_1791120548126",
+        "relativePath": "p14_media_1791396800814/motion_preview_1791396801749.html",
+        "publicUrl": "/api/part14/files/p14_media_1791396800814/motion_preview_1791396801749.html",
+        "projectFolder": "/data/part14_projects/p14_media_1791396800814",
         "sizeBytes": 2883,
         "persistedOnDisk": true,
-        "createdAt": 1791120548867
+        "createdAt": 1791396801749
       }
     ],
     "androidFileAccess": {
@@ -705,7 +705,7 @@
       "permissionName": "android.permission.POST_NOTIFICATIONS",
       "permissionGranted": true,
       "statusMessage": "Server-side persistent project disk (/data/part14_projects) active. Android Native Bridge in web preview mode (never bypassed).",
-      "lastCheckedAt": 1791120548126
+      "lastCheckedAt": 1791396800814
     },
     "blockedIntegrations": [
       {
@@ -721,13 +721,13 @@
     ],
     "errors": [],
     "verificationScore": 96,
-    "verificationNotes": "Verified 4 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791120548126. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\"",
+    "verificationNotes": "Verified 4 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791396800814. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\"",
     "facebookPublish": {
-      "id": "fb_1791120548870",
-      "projectId": "p14_media_1791120548126",
+      "id": "fb_1791396801752",
+      "projectId": "p14_media_1791396800814",
       "caption": "✨ Introducing our latest Authorized Studio Desk Showcase concept! Crafted with precision and inspired by timeless design. Let us know what you think below! #Design #Innovation #Showcase",
       "mediaPaths": [
-        "/api/part14/files/p14_media_1791120548126/original_visual_1791120548859.svg"
+        "/api/part14/files/p14_media_1791396800814/original_visual_1791396801742.svg"
       ],
       "status": "PUBLISHED",
       "stageHistory": [
@@ -736,125 +736,125 @@
         "VERIFYING",
         "PUBLISHED"
       ],
-      "approvalRequestId": "appr_1791120548870_40h1",
+      "approvalRequestId": "appr_1791396801752_1lo0",
       "approvedByUser": true,
       "externalApiStatus": "AVAILABLE",
       "verifiedBeforePublished": true,
-      "reason": "Verified external post ID pub_1791120548872: Published successfully to Facebook.",
-      "timestamp": 1791120548870,
-      "externalPostId": "pub_1791120548872",
+      "reason": "Verified external post ID pub_1791396801753: Published successfully to Facebook.",
+      "timestamp": 1791396801752,
+      "externalPostId": "pub_1791396801753",
       "externalUrl": "https://facebook.com/post/demo"
     }
   },
   {
-    "projectId": "p14_media_1791120547198",
+    "projectId": "p14_media_1791396799578",
     "name": "Media Pipeline: Modern Minimalist Teak Chair",
     "workflowType": "MEDIA_PIPELINE_A",
     "goal": "Research 5 reference images for \"Modern Minimalist Teak Chair\", collect & save to project folder, generate original image & video, verify output, and stage authorized Facebook publishing.",
     "status": "BLOCKED",
     "currentStage": "PUBLISH FAILED / BLOCKED — Facebook Graph API Not Connected",
-    "createdAt": 1791120547198,
-    "updatedAt": 1791120548013,
+    "createdAt": 1791396799578,
+    "updatedAt": 1791396800697,
     "operations": [
       {
-        "id": "op_ref_p14_media_1791120547198",
-        "projectId": "p14_media_1791120547198",
+        "id": "op_ref_p14_media_1791396799578",
+        "projectId": "p14_media_1791396799578",
         "workerId": "worker-research",
         "workerName": "Nova",
         "taskTitle": "Researching public image references",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Query: \"Modern Minimalist Teak Chair\" (5 open-license references)",
-        "output": "Collected 5 verified reference images & saved manifest to /data/part14_projects/p14_media_1791120547198/references_manifest.json",
+        "output": "Collected 5 verified reference images & saved manifest to /data/part14_projects/p14_media_1791396799578/references_manifest.json",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120547198/references_manifest.json"
+          "/api/part14/files/p14_media_1791396799578/references_manifest.json"
         ],
         "errors": [],
-        "startedAt": 1791120547199,
-        "updatedAt": 1791120547708,
+        "startedAt": 1791396799578,
+        "updatedAt": 1791396800393,
         "verificationResult": {
           "verified": true,
           "score": 96,
           "summary": "5 open-license reference images verified."
         },
-        "completedAt": 1791120547708
+        "completedAt": 1791396800393
       },
       {
-        "id": "op_img_p14_media_1791120547198",
-        "projectId": "p14_media_1791120547198",
+        "id": "op_img_p14_media_1791396799578",
+        "projectId": "p14_media_1791396799578",
         "workerId": "worker-content",
         "workerName": "Echo",
         "taskTitle": "Generating original images",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Awaiting 5 collected reference images for \"Modern Minimalist Teak Chair\"",
-        "output": "Created original visual (image/svg+xml) saved at /api/part14/files/p14_media_1791120547198/original_visual_1791120547975.svg",
+        "output": "Created original visual (image/svg+xml) saved at /api/part14/files/p14_media_1791396799578/original_visual_1791396800668.svg",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120547198/original_visual_1791120547975.svg"
+          "/api/part14/files/p14_media_1791396799578/original_visual_1791396800668.svg"
         ],
         "errors": [],
-        "startedAt": 1791120547224,
-        "updatedAt": 1791120547977,
+        "startedAt": 1791396799602,
+        "updatedAt": 1791396800669,
         "verificationResult": {
           "verified": true,
           "score": 95,
-          "summary": "Verified original image asset (original_visual_1791120547975.svg, 2829 bytes) in /data/part14_projects/p14_media_1791120547198."
+          "summary": "Verified original image asset (original_visual_1791396800668.svg, 2829 bytes) in /data/part14_projects/p14_media_1791396799578."
         },
-        "completedAt": 1791120547977
+        "completedAt": 1791396800669
       },
       {
-        "id": "op_vid_p14_media_1791120547198",
-        "projectId": "p14_media_1791120547198",
+        "id": "op_vid_p14_media_1791396799578",
+        "projectId": "p14_media_1791396799578",
         "workerId": "worker-media",
         "workerName": "Vesper",
         "taskTitle": "Preparing video",
         "status": "BLOCKED",
         "progress": 100,
         "input": "Awaiting original image asset for \"Modern Minimalist Teak Chair\"",
-        "output": "Video generation is unavailable because the required provider/API is not connected. (Saved HTML5 motion storyboard at /api/part14/files/p14_media_1791120547198/motion_preview_1791120547987.html)",
+        "output": "Video generation is unavailable because the required provider/API is not connected. (Saved HTML5 motion storyboard at /api/part14/files/p14_media_1791396799578/motion_preview_1791396800676.html)",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120547198/motion_preview_1791120547987.html"
+          "/api/part14/files/p14_media_1791396799578/motion_preview_1791396800676.html"
         ],
         "errors": [
           "Video generation is unavailable because the required provider/API is not connected."
         ],
-        "startedAt": 1791120547225,
-        "updatedAt": 1791120547989,
+        "startedAt": 1791396799603,
+        "updatedAt": 1791396800680,
         "verificationResult": {
           "verified": true,
           "score": 94,
           "summary": "Video generation is unavailable because the required provider/API is not connected."
         },
-        "completedAt": 1791120547989
+        "completedAt": 1791396800680
       },
       {
-        "id": "op_ver_p14_media_1791120547198",
-        "projectId": "p14_media_1791120547198",
+        "id": "op_ver_p14_media_1791396799578",
+        "projectId": "p14_media_1791396799578",
         "workerId": "worker-verification",
         "workerName": "Astra",
         "taskTitle": "Verifying output",
         "status": "COMPLETED",
         "progress": 100,
         "input": "Verify reference count, image file integrity, and video status",
-        "output": "Verified 5 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791120547198. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\"",
+        "output": "Verified 5 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791396799578. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\"",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120547198/references_manifest.json",
-          "/api/part14/files/p14_media_1791120547198/original_visual_1791120547975.svg",
-          "/api/part14/files/p14_media_1791120547198/motion_preview_1791120547987.html"
+          "/api/part14/files/p14_media_1791396799578/references_manifest.json",
+          "/api/part14/files/p14_media_1791396799578/original_visual_1791396800668.svg",
+          "/api/part14/files/p14_media_1791396799578/motion_preview_1791396800676.html"
         ],
         "errors": [],
-        "startedAt": 1791120547226,
-        "updatedAt": 1791120547990,
+        "startedAt": 1791396799604,
+        "updatedAt": 1791396800681,
         "verificationResult": {
           "verified": true,
           "score": 96,
-          "summary": "Verified 5 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791120547198. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\""
+          "summary": "Verified 5 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791396799578. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\""
         },
-        "completedAt": 1791120547990
+        "completedAt": 1791396800681
       },
       {
-        "id": "op_pub_p14_media_1791120547198",
-        "projectId": "p14_media_1791120547198",
+        "id": "op_pub_p14_media_1791396799578",
+        "projectId": "p14_media_1791396799578",
         "workerId": "worker-manager",
         "workerName": "Hermes",
         "taskTitle": "Publishing to Authorized Facebook Page",
@@ -863,109 +863,109 @@
         "input": "Publish \"Modern Minimalist Teak Chair\" to Facebook",
         "output": "PUBLISH FAILED / ACTION BLOCKED: User approved publication, but Facebook Graph API OAuth credentials are not connected. Never claims PUBLISHED without verified post ID. Saved publishing package locally.",
         "filesCreated": [
-          "/api/part14/files/p14_media_1791120547198/facebook_publish_package.json"
+          "/api/part14/files/p14_media_1791396799578/facebook_publish_package.json"
         ],
         "errors": [
           "PUBLISH FAILED: Facebook Graph API OAuth access token is not connected."
         ],
-        "startedAt": 1791120547991,
-        "updatedAt": 1791120548012,
+        "startedAt": 1791396800682,
+        "updatedAt": 1791396800696,
         "verificationResult": {
           "verified": false,
           "score": 0,
           "summary": "Verification confirmed no external Facebook post was created (API not connected). Marked PUBLISH_FAILED / BLOCKED."
         },
-        "completedAt": 1791120548012
+        "completedAt": 1791396800696
       }
     ],
     "references": [
       {
-        "id": "ref_1791120547703_1",
-        "projectId": "p14_media_1791120547198",
+        "id": "ref_1791396800390_1",
+        "projectId": "p14_media_1791396799578",
         "title": "Modern Minimalist Teak Chair — Reference Study #1 (Architecture)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120547198/ref_card_1.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_1.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_1.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_1.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_1.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_1.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120547198/ref_card_1.svg",
-        "downloadedAt": 1791120547703,
+        "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_1.svg",
+        "downloadedAt": 1791396800390,
         "verified": true
       },
       {
-        "id": "ref_1791120547703_2",
-        "projectId": "p14_media_1791120547198",
+        "id": "ref_1791396800391_2",
+        "projectId": "p14_media_1791396799578",
         "title": "Modern Minimalist Teak Chair — Reference Study #2 (Interior Design)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120547198/ref_card_2.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_2.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_2.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_2.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_2.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_2.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120547198/ref_card_2.svg",
-        "downloadedAt": 1791120547703,
+        "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_2.svg",
+        "downloadedAt": 1791396800391,
         "verified": true
       },
       {
-        "id": "ref_1791120547703_3",
-        "projectId": "p14_media_1791120547198",
+        "id": "ref_1791396800391_3",
+        "projectId": "p14_media_1791396799578",
         "title": "Modern Minimalist Teak Chair — Reference Study #3 (Studio Lighting)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120547198/ref_card_3.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_3.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_3.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_3.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_3.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_3.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120547198/ref_card_3.svg",
-        "downloadedAt": 1791120547703,
+        "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_3.svg",
+        "downloadedAt": 1791396800391,
         "verified": true
       },
       {
-        "id": "ref_1791120547703_4",
-        "projectId": "p14_media_1791120547198",
+        "id": "ref_1791396800391_4",
+        "projectId": "p14_media_1791396799578",
         "title": "Modern Minimalist Teak Chair — Reference Study #4 (Minimalist Furniture)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120547198/ref_card_4.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_4.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_4.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_4.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_4.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_4.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120547198/ref_card_4.svg",
-        "downloadedAt": 1791120547703,
+        "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_4.svg",
+        "downloadedAt": 1791396800391,
         "verified": true
       },
       {
-        "id": "ref_1791120547703_5",
-        "projectId": "p14_media_1791120547198",
+        "id": "ref_1791396800391_5",
+        "projectId": "p14_media_1791396799578",
         "title": "Modern Minimalist Teak Chair — Reference Study #5 (Modern Craft)",
-        "sourceUrl": "/api/part14/files/p14_media_1791120547198/ref_card_5.svg",
-        "imageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_5.svg",
-        "pageUrl": "/api/part14/files/p14_media_1791120547198/ref_card_5.svg",
+        "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_5.svg",
+        "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_5.svg",
+        "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_5.svg",
         "sourceName": "FRIDAY Local Reference Archive",
         "license": "CC0 Public Domain Dedication",
         "width": 1200,
         "height": 675,
-        "savedPath": "/api/part14/files/p14_media_1791120547198/ref_card_5.svg",
-        "downloadedAt": 1791120547703,
+        "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_5.svg",
+        "downloadedAt": 1791396800391,
         "verified": true
       }
     ],
     "generatedImages": [
       {
-        "id": "img_1791120547976",
-        "projectId": "p14_media_1791120547198",
+        "id": "img_1791396800668",
+        "projectId": "p14_media_1791396799578",
         "prompt": "High-impact original brand visual for Modern Minimalist Teak Chair",
         "title": "Modern Minimalist Teak Chair",
         "modelUsed": "FRIDAY-Vector-Synthesizer-v1",
         "generationMode": "SERVER_SVG_SYNTHESIS",
-        "imageUrl": "/api/part14/files/p14_media_1791120547198/original_visual_1791120547975.svg",
-        "savedPath": "/api/part14/files/p14_media_1791120547198/original_visual_1791120547975.svg",
-        "projectFolder": "/data/part14_projects/p14_media_1791120547198",
+        "imageUrl": "/api/part14/files/p14_media_1791396799578/original_visual_1791396800668.svg",
+        "savedPath": "/api/part14/files/p14_media_1791396799578/original_visual_1791396800668.svg",
+        "projectFolder": "/data/part14_projects/p14_media_1791396799578",
         "mimeType": "image/svg+xml",
         "externalApiStatus": "BLOCKED",
         "externalApiNote": "Paid Gemini Image API unavailable ({\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check yo); synthesized original vector graphic to project disk.",
@@ -975,28 +975,28 @@
           "format": "image/svg+xml",
           "referencesUsed": 5
         },
-        "createdAt": 1791120547976,
+        "createdAt": 1791396800668,
         "verified": true,
         "verificationScore": 95,
-        "verificationSummary": "Verified original image asset (original_visual_1791120547975.svg, 2829 bytes) in /data/part14_projects/p14_media_1791120547198."
+        "verificationSummary": "Verified original image asset (original_visual_1791396800668.svg, 2829 bytes) in /data/part14_projects/p14_media_1791396799578."
       }
     ],
     "generatedVideos": [
       {
-        "id": "vid_1791120547987",
-        "projectId": "p14_media_1791120547198",
+        "id": "vid_1791396800676",
+        "projectId": "p14_media_1791396799578",
         "prompt": "Cinematic showcase reel for Modern Minimalist Teak Chair",
         "modelUsed": "veo-3.1-lite-generate-preview",
         "status": "BLOCKED",
         "externalApiStatus": "BLOCKED",
-        "motionPreviewUrl": "/api/part14/files/p14_media_1791120547198/motion_preview_1791120547987.html",
-        "savedPath": "/api/part14/files/p14_media_1791120547198/motion_preview_1791120547987.html",
-        "projectFolder": "/data/part14_projects/p14_media_1791120547198",
+        "motionPreviewUrl": "/api/part14/files/p14_media_1791396799578/motion_preview_1791396800676.html",
+        "savedPath": "/api/part14/files/p14_media_1791396799578/motion_preview_1791396800676.html",
+        "projectFolder": "/data/part14_projects/p14_media_1791396799578",
         "reason": "Video generation is unavailable because the required provider/API is not connected.",
         "providerMessage": "Video generation is unavailable because the required provider/API is not connected.",
-        "createdAt": 1791120547987,
+        "createdAt": 1791396800676,
         "verified": true,
-        "verificationResult": "Video generation is unavailable because the required provider/API is not connected. Verified local HTML5 motion storyboard artifact (motion_preview_1791120547987.html) saved in /data/part14_projects/p14_media_1791120547198."
+        "verificationResult": "Video generation is unavailable because the required provider/API is not connected. Verified local HTML5 motion storyboard artifact (motion_preview_1791396800676.html) saved in /data/part14_projects/p14_media_1791396799578."
       }
     ],
     "businessLeads": [],
@@ -1006,42 +1006,42 @@
       {
         "name": "references_manifest.json",
         "type": "reference_manifest",
-        "relativePath": "p14_media_1791120547198/references_manifest.json",
-        "publicUrl": "/api/part14/files/p14_media_1791120547198/references_manifest.json",
-        "projectFolder": "/data/part14_projects/p14_media_1791120547198",
+        "relativePath": "p14_media_1791396799578/references_manifest.json",
+        "publicUrl": "/api/part14/files/p14_media_1791396799578/references_manifest.json",
+        "projectFolder": "/data/part14_projects/p14_media_1791396799578",
         "sizeBytes": 3690,
         "persistedOnDisk": true,
-        "createdAt": 1791120547703
+        "createdAt": 1791396800391
       },
       {
-        "name": "original_visual_1791120547975.svg",
+        "name": "original_visual_1791396800668.svg",
         "type": "generated_image",
-        "relativePath": "p14_media_1791120547198/original_visual_1791120547975.svg",
-        "publicUrl": "/api/part14/files/p14_media_1791120547198/original_visual_1791120547975.svg",
-        "projectFolder": "/data/part14_projects/p14_media_1791120547198",
+        "relativePath": "p14_media_1791396799578/original_visual_1791396800668.svg",
+        "publicUrl": "/api/part14/files/p14_media_1791396799578/original_visual_1791396800668.svg",
+        "projectFolder": "/data/part14_projects/p14_media_1791396799578",
         "sizeBytes": 2829,
         "persistedOnDisk": true,
-        "createdAt": 1791120547976
+        "createdAt": 1791396800668
       },
       {
-        "name": "motion_preview_1791120547987.html",
+        "name": "motion_preview_1791396800676.html",
         "type": "motion_preview",
-        "relativePath": "p14_media_1791120547198/motion_preview_1791120547987.html",
-        "publicUrl": "/api/part14/files/p14_media_1791120547198/motion_preview_1791120547987.html",
-        "projectFolder": "/data/part14_projects/p14_media_1791120547198",
+        "relativePath": "p14_media_1791396799578/motion_preview_1791396800676.html",
+        "publicUrl": "/api/part14/files/p14_media_1791396799578/motion_preview_1791396800676.html",
+        "projectFolder": "/data/part14_projects/p14_media_1791396799578",
         "sizeBytes": 2871,
         "persistedOnDisk": true,
-        "createdAt": 1791120547987
+        "createdAt": 1791396800676
       },
       {
         "name": "facebook_publish_package.json",
         "type": "publish_package",
-        "relativePath": "p14_media_1791120547198/facebook_publish_package.json",
-        "publicUrl": "/api/part14/files/p14_media_1791120547198/facebook_publish_package.json",
-        "projectFolder": "/data/part14_projects/p14_media_1791120547198",
+        "relativePath": "p14_media_1791396799578/facebook_publish_package.json",
+        "publicUrl": "/api/part14/files/p14_media_1791396799578/facebook_publish_package.json",
+        "projectFolder": "/data/part14_projects/p14_media_1791396799578",
         "sizeBytes": 884,
         "persistedOnDisk": true,
-        "createdAt": 1791120548012
+        "createdAt": 1791396800696
       }
     ],
     "androidFileAccess": {
@@ -1050,7 +1050,7 @@
       "permissionName": "android.permission.POST_NOTIFICATIONS",
       "permissionGranted": true,
       "statusMessage": "Server-side persistent project disk (/data/part14_projects) active. Android Native Bridge in web preview mode (never bypassed).",
-      "lastCheckedAt": 1791120547198
+      "lastCheckedAt": 1791396799578
     },
     "blockedIntegrations": [
       {
@@ -1071,13 +1071,13 @@
     ],
     "errors": [],
     "verificationScore": 96,
-    "verificationNotes": "Verified 5 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791120547198. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\"",
+    "verificationNotes": "Verified 5 open-license reference images, 1 original visual asset, and 3 persisted project files in /data/part14_projects/p14_media_1791396799578. Video API truthfully marked: \"Video generation is unavailable because the required provider/API is not connected.\"",
     "facebookPublish": {
-      "id": "fb_1791120547991",
-      "projectId": "p14_media_1791120547198",
+      "id": "fb_1791396800682",
+      "projectId": "p14_media_1791396799578",
       "caption": "Handcrafted minimalist teak chair collection.",
       "mediaPaths": [
-        "/api/part14/files/p14_media_1791120547198/original_visual_1791120547975.svg"
+        "/api/part14/files/p14_media_1791396799578/original_visual_1791396800668.svg"
       ],
       "status": "PUBLISH_FAILED",
       "stageHistory": [
@@ -1087,13 +1087,13 @@
         "PUBLISH_FAILED",
         "BLOCKED"
       ],
-      "approvalRequestId": "appr_1791120547991_6oy2",
+      "approvalRequestId": "appr_1791396800681_2ixb",
       "approvedByUser": true,
       "externalApiStatus": "UNAVAILABLE",
       "verifiedBeforePublished": false,
       "reason": "PUBLISH FAILED / ACTION BLOCKED: User approved publication, but Facebook Graph API OAuth credentials are not connected. Never claims PUBLISHED without verified post ID. Saved publishing package locally.",
-      "timestamp": 1791120547991,
-      "draftPackagePath": "/api/part14/files/p14_media_1791120547198/facebook_publish_package.json",
+      "timestamp": 1791396800682,
+      "draftPackagePath": "/api/part14/files/p14_media_1791396799578/facebook_publish_package.json",
       "errorDetails": "PUBLISH FAILED: Facebook Graph API OAuth access token is not connected."
     }
   }

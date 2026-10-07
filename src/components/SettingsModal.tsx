@@ -1,5 +1,6 @@
-import React from 'react';
-import { X, Sparkles, Languages, Zap, Globe, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Sparkles, Languages, Zap, Globe, ShieldCheck, Server, CheckCircle2 } from 'lucide-react';
+import { LiveSession } from '../services/LiveSession';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -7,7 +8,24 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+  const [serverUrl, setServerUrl] = useState<string>(() => LiveSession.getServerBaseUrl());
+  const [savedNotice, setSavedNotice] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleSaveServerUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const clean = serverUrl.trim().replace(/\/+$/, '');
+      if (clean) {
+        localStorage.setItem('friday_server_url', clean);
+      } else {
+        localStorage.removeItem('friday_server_url');
+      }
+      setSavedNotice(true);
+      setTimeout(() => setSavedNotice(false), 2500);
+    } catch {}
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -36,6 +54,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </div>
 
         <div className="mt-5 space-y-5">
+          {/* Android / Mobile Live Server Endpoint Configuration */}
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-cyan-500/30 space-y-2.5">
+            <div className="flex items-center justify-between text-cyan-400 text-xs font-mono font-semibold">
+              <div className="flex items-center space-x-2">
+                <Server className="w-4 h-4" />
+                <span>FRIDAY SERVER ENDPOINT (ANDROID / REMOTE)</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
+                {LiveSession.isBundledLocalOrigin() && !serverUrl.trim()
+                  ? 'LOCAL BUNDLE (OFFLINE)'
+                  : 'CONFIGURED'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              When running as a standalone Android APK, enter your deployed or LAN FRIDAY backend URL (e.g. <code className="text-cyan-300">http://192.168.1.100:3000</code> or <code className="text-cyan-300">https://your-friday-server.run.app</code>) to enable Gemini Live WebSocket voice streaming.
+            </p>
+            <form onSubmit={handleSaveServerUrl} className="flex flex-col sm:flex-row gap-2 pt-1">
+              <input
+                type="text"
+                value={serverUrl}
+                onChange={(e) => setServerUrl(e.target.value)}
+                placeholder="https://your-friday-server.run.app (or leave blank on web)"
+                className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 placeholder-slate-500 focus:border-cyan-500 outline-none"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold transition-all shrink-0 flex items-center justify-center space-x-1.5 cursor-pointer"
+              >
+                {savedNotice ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-emerald-300">Saved</span>
+                  </>
+                ) : (
+                  <span>Save Endpoint</span>
+                )}
+              </button>
+            </form>
+          </div>
+
           {/* Engine specifications */}
           <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
             <div className="flex items-center space-x-2 text-cyan-400 text-xs font-mono font-semibold">

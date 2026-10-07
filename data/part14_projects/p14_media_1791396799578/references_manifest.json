@@ -1,0 +1,83 @@
+{
+  "projectId": "p14_media_1791396799578",
+  "projectFolder": "/data/part14_projects/p14_media_1791396799578",
+  "query": "Modern Minimalist Teak Chair",
+  "count": 5,
+  "references": [
+    {
+      "id": "ref_1791396800390_1",
+      "projectId": "p14_media_1791396799578",
+      "title": "Modern Minimalist Teak Chair — Reference Study #1 (Architecture)",
+      "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_1.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_1.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_1.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_1.svg",
+      "downloadedAt": 1791396800390,
+      "verified": true
+    },
+    {
+      "id": "ref_1791396800391_2",
+      "projectId": "p14_media_1791396799578",
+      "title": "Modern Minimalist Teak Chair — Reference Study #2 (Interior Design)",
+      "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_2.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_2.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_2.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_2.svg",
+      "downloadedAt": 1791396800391,
+      "verified": true
+    },
+    {
+      "id": "ref_1791396800391_3",
+      "projectId": "p14_media_1791396799578",
+      "title": "Modern Minimalist Teak Chair — Reference Study #3 (Studio Lighting)",
+      "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_3.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_3.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_3.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_3.svg",
+      "downloadedAt": 1791396800391,
+      "verified": true
+    },
+    {
+      "id": "ref_1791396800391_4",
+      "projectId": "p14_media_1791396799578",
+      "title": "Modern Minimalist Teak Chair — Reference Study #4 (Minimalist Furniture)",
+      "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_4.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_4.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_4.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_4.svg",
+      "downloadedAt": 1791396800391,
+      "verified": true
+    },
+    {
+      "id": "ref_1791396800391_5",
+      "projectId": "p14_media_1791396799578",
+      "title": "Modern Minimalist Teak Chair — Reference Study #5 (Modern Craft)",
+      "sourceUrl": "/api/part14/files/p14_media_1791396799578/ref_card_5.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_5.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791396799578/ref_card_5.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791396799578/ref_card_5.svg",
+      "downloadedAt": 1791396800391,
+      "verified": true
+    }
+  ]
+}

@@ -44,9 +44,9 @@ export const AgentTown: React.FC<AgentTownProps> = ({
       <div
         key={worker.id}
         onClick={() => onSelectWorker(worker.id)}
-        className={`relative flex flex-col p-2.5 rounded-xl border backdrop-blur-md cursor-pointer transition-all duration-200 select-none group ${
+        className={`relative w-full max-w-full min-w-0 flex flex-col p-3 rounded-xl border backdrop-blur-md cursor-pointer transition-all duration-200 select-none group ${
           isSelected
-            ? 'bg-slate-900 border-cyan-400 shadow-[0_0_18px_rgba(6,182,212,0.45)] ring-1 ring-cyan-400/50 scale-[1.02]'
+            ? 'bg-slate-900 border-cyan-400 shadow-[0_0_18px_rgba(6,182,212,0.45)] ring-1 ring-cyan-400/50'
             : isWorking
             ? 'bg-slate-950/90 border-cyan-500/70 shadow-[0_0_12px_rgba(6,182,212,0.3)] animate-pulse'
             : 'bg-slate-950/80 border-slate-800/90 hover:border-slate-600 hover:bg-slate-900/60'
@@ -58,9 +58,9 @@ export const AgentTown: React.FC<AgentTownProps> = ({
         )}
 
         {/* Top: Avatar & Status LED */}
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center justify-between gap-2 mb-1.5 min-w-0">
           <div
-            className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 border shadow-inner text-xl overflow-hidden"
+            className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 border shadow-inner text-xl overflow-hidden shrink-0"
             style={{ borderColor: `${worker.accentColor}70` }}
           >
             <span>{worker.avatar}</span>
@@ -69,9 +69,9 @@ export const AgentTown: React.FC<AgentTownProps> = ({
             )}
           </div>
 
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end min-w-0">
             <span
-              className={`flex items-center space-x-1 px-1.5 py-0.5 rounded-full text-[8px] font-mono font-bold uppercase tracking-wider ${
+              className={`flex items-center space-x-1 px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider shrink-0 ${
                 isWorking
                   ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 animate-pulse'
                   : isWaiting
@@ -80,7 +80,7 @@ export const AgentTown: React.FC<AgentTownProps> = ({
               }`}
             >
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
+                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                   isWorking
                     ? 'bg-cyan-400 shadow-[0_0_4px_#22d3ee] animate-ping'
                     : isWaiting
@@ -90,24 +90,24 @@ export const AgentTown: React.FC<AgentTownProps> = ({
               />
               <span>{isWorking ? 'WORKING' : isWaiting ? 'WAIT' : 'READY'}</span>
             </span>
-            <span className="text-[8px] font-mono text-slate-500 mt-1">
-              {worker.workstation.deskLabel.split(' ')[0]}
+            <span className="text-[9px] font-mono text-slate-400 mt-1 truncate max-w-full">
+              {worker.workstation.deskLabel}
             </span>
           </div>
         </div>
 
         {/* Middle: Name & Role */}
-        <div className="flex flex-col">
-          <div className="flex items-center justify-between">
-            <span className="font-mono font-extrabold text-white text-xs tracking-tight group-hover:text-cyan-200">
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <span className="font-mono font-extrabold text-white text-xs sm:text-sm tracking-tight group-hover:text-cyan-200 truncate">
               {worker.name}
             </span>
-            <span className="text-[8px] font-mono text-slate-500">
+            <span className="text-[9px] font-mono text-slate-400 shrink-0">
               #{worker.metrics.tasksCompleted}
             </span>
           </div>
           <span
-            className="text-[9px] font-mono font-semibold tracking-wider uppercase mt-0.5"
+            className="text-[9px] sm:text-[10px] font-mono font-semibold tracking-wider uppercase mt-0.5 break-words"
             style={{ color: worker.accentColor }}
           >
             {worker.role.replace('_', ' ')}
@@ -115,20 +115,20 @@ export const AgentTown: React.FC<AgentTownProps> = ({
         </div>
 
         {/* Bottom: Active Task Ticker or Station Description */}
-        <div className="mt-2 pt-1.5 border-t border-slate-800/80">
+        <div className="mt-2 pt-1.5 border-t border-slate-800/80 min-w-0">
           {isWorking && worker.currentTask ? (
-            <div className="text-[9px] font-mono text-cyan-200 font-semibold truncate flex items-center space-x-1 animate-pulse">
-              <span>⚡</span>
-              <span className="truncate">{worker.currentTask}</span>
+            <div className="text-[10px] font-mono text-cyan-200 font-semibold break-words flex items-start space-x-1 animate-pulse min-w-0">
+              <span className="shrink-0">⚡</span>
+              <span className="break-words [overflow-wrap:anywhere] flex-1 min-w-0">{worker.currentTask}</span>
             </div>
           ) : (
-            <div className="text-[9px] font-mono text-slate-400 truncate">
+            <div className="text-[10px] font-mono text-slate-400 break-words [overflow-wrap:anywhere]">
               {worker.capabilities[0]}
             </div>
           )}
 
           {/* Progress bar */}
-          <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mt-1.5">
+          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1.5">
             <div
               className="h-full transition-all duration-300"
               style={{
@@ -143,33 +143,33 @@ export const AgentTown: React.FC<AgentTownProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col rounded-2xl border border-cyan-500/30 bg-[#040816]/95 backdrop-blur-xl shadow-2xl overflow-hidden font-mono select-none">
+    <div className="relative w-full max-w-full min-w-0 h-full flex flex-col rounded-2xl border border-cyan-500/30 bg-[#040816]/95 backdrop-blur-xl shadow-2xl overflow-hidden font-mono select-none">
       {/* Agent Town Campus Header */}
-      <div className="flex flex-wrap items-center justify-between px-3 sm:px-4 py-2 border-b border-cyan-500/25 bg-slate-950/80 gap-2 shrink-0">
-        <div className="flex items-center space-x-2">
-          <div className="relative flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 sm:px-4 py-2 border-b border-cyan-500/25 bg-slate-950/80 gap-2 shrink-0 min-w-0">
+        <div className="flex items-center space-x-2 min-w-0">
+          <div className="relative flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 shrink-0">
             <Building2 className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-black tracking-widest text-white uppercase">AGENT TOWN</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 font-bold">
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 font-bold">
                 CAMPUS ACTIVE
               </span>
             </div>
-            <span className="text-[9px] text-slate-400 hidden sm:inline">
+            <span className="text-[9px] text-slate-400 block truncate">
               17 Specialized Autonomous Stations • Real Workforce Topology
             </span>
           </div>
         </div>
 
-        {/* Department Filter Tabs */}
-        <div className="flex items-center space-x-1 overflow-x-auto scrollbar-none py-0.5">
+        {/* Department Filter Tabs — Controlled horizontal scroll inside tab row only */}
+        <div className="w-full sm:w-auto flex items-center space-x-1 overflow-x-auto scrollbar-none py-0.5 min-w-0 max-w-full">
           {departments.map((dept) => (
             <button
               key={dept.id}
               onClick={() => setActiveDepartment(dept.id)}
-              className={`px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider transition-all whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold tracking-wider transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 activeDepartment === dept.id
                   ? 'bg-cyan-500/25 border border-cyan-400 text-cyan-200 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
                   : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -181,19 +181,19 @@ export const AgentTown: React.FC<AgentTownProps> = ({
         </div>
       </div>
 
-      {/* Main Architectural Campus Canvas (Scrollable 3x2 Departmental Suites) */}
-      <div className="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-3 scrollbar-thin scrollbar-thumb-cyan-500/20">
+      {/* Main Architectural Campus Canvas (Scrollable Departmental Suites — Single-column on narrow mobile, multi-column on tablet/desktop) */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5 sm:p-3 space-y-3 scrollbar-thin scrollbar-thumb-cyan-500/20 min-w-0 w-full">
         {/* ROOM 1: EXECUTIVE SUITE */}
         {(activeDepartment === 'ALL' || activeDepartment === 'EXECUTIVE') && (
-          <div className="p-3 rounded-2xl border border-cyan-500/30 bg-cyan-950/10 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300 pb-1 border-b border-cyan-500/20">
-              <div className="flex items-center space-x-2">
-                <span>🏛️</span>
-                <span className="tracking-wider uppercase">ROOM A: EXECUTIVE SUITE & DISPATCH</span>
+          <div className="p-2.5 sm:p-3 rounded-2xl border border-cyan-500/30 bg-cyan-950/10 space-y-2 w-full min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-cyan-300 pb-1 border-b border-cyan-500/20 min-w-0">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="shrink-0">🏛️</span>
+                <span className="tracking-wider uppercase break-words">ROOM A: EXECUTIVE SUITE & DISPATCH</span>
               </div>
-              <span className="text-[9px] text-cyan-400/80 font-normal">2 Command Stations</span>
+              <span className="text-[9px] text-cyan-400/80 font-normal shrink-0">2 Command Stations</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5 w-full min-w-0">
               {executiveWorkers.map(renderWorkerCard)}
             </div>
           </div>
@@ -201,15 +201,15 @@ export const AgentTown: React.FC<AgentTownProps> = ({
 
         {/* ROOM 2: RESEARCH & SIGNALS LAB */}
         {(activeDepartment === 'ALL' || activeDepartment === 'RESEARCH') && (
-          <div className="p-3 rounded-2xl border border-indigo-500/30 bg-indigo-950/10 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-indigo-300 pb-1 border-b border-indigo-500/20">
-              <div className="flex items-center space-x-2">
-                <span>🔬</span>
-                <span className="tracking-wider uppercase">ROOM B: RESEARCH LAB & MARKET SIGNALS</span>
+          <div className="p-2.5 sm:p-3 rounded-2xl border border-indigo-500/30 bg-indigo-950/10 space-y-2 w-full min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-indigo-300 pb-1 border-b border-indigo-500/20 min-w-0">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="shrink-0">🔬</span>
+                <span className="tracking-wider uppercase break-words">ROOM B: RESEARCH LAB & MARKET SIGNALS</span>
               </div>
-              <span className="text-[9px] text-indigo-400/80 font-normal">3 Research Stations</span>
+              <span className="text-[9px] text-indigo-400/80 font-normal shrink-0">3 Research Stations</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 w-full min-w-0">
               {researchWorkers.map(renderWorkerCard)}
             </div>
           </div>
@@ -217,15 +217,15 @@ export const AgentTown: React.FC<AgentTownProps> = ({
 
         {/* ROOM 3: STRATEGIC BUSINESS & QUANT HUB */}
         {(activeDepartment === 'ALL' || activeDepartment === 'STRATEGY') && (
-          <div className="p-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-emerald-300 pb-1 border-b border-emerald-500/20">
-              <div className="flex items-center space-x-2">
-                <span>📈</span>
-                <span className="tracking-wider uppercase">ROOM C: STRATEGY & BUSINESS QUANT HUB</span>
+          <div className="p-2.5 sm:p-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 space-y-2 w-full min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-emerald-300 pb-1 border-b border-emerald-500/20 min-w-0">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="shrink-0">📈</span>
+                <span className="tracking-wider uppercase break-words">ROOM C: STRATEGY & BUSINESS QUANT HUB</span>
               </div>
-              <span className="text-[9px] text-emerald-400/80 font-normal">2 Strategy Stations</span>
+              <span className="text-[9px] text-emerald-400/80 font-normal shrink-0">2 Strategy Stations</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5 w-full min-w-0">
               {strategyWorkers.map(renderWorkerCard)}
             </div>
           </div>
@@ -233,15 +233,15 @@ export const AgentTown: React.FC<AgentTownProps> = ({
 
         {/* ROOM 4: CREATIVE STUDIO & MEDIA SUITE */}
         {(activeDepartment === 'ALL' || activeDepartment === 'CREATIVE') && (
-          <div className="p-3 rounded-2xl border border-rose-500/30 bg-rose-950/10 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-rose-300 pb-1 border-b border-rose-500/20">
-              <div className="flex items-center space-x-2">
-                <span>🎨</span>
-                <span className="tracking-wider uppercase">ROOM D: CREATIVE STUDIO & MEDIA PACKAGING</span>
+          <div className="p-2.5 sm:p-3 rounded-2xl border border-rose-500/30 bg-rose-950/10 space-y-2 w-full min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-rose-300 pb-1 border-b border-rose-500/20 min-w-0">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="shrink-0">🎨</span>
+                <span className="tracking-wider uppercase break-words">ROOM D: CREATIVE STUDIO & MEDIA PACKAGING</span>
               </div>
-              <span className="text-[9px] text-rose-400/80 font-normal">2 Creative Stations</span>
+              <span className="text-[9px] text-rose-400/80 font-normal shrink-0">2 Creative Stations</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5 w-full min-w-0">
               {creativeWorkers.map(renderWorkerCard)}
             </div>
           </div>
@@ -249,15 +249,15 @@ export const AgentTown: React.FC<AgentTownProps> = ({
 
         {/* ROOM 5: SECURITY VAULT & QUALITY GATE */}
         {(activeDepartment === 'ALL' || activeDepartment === 'SECURITY') && (
-          <div className="p-3 rounded-2xl border border-purple-500/30 bg-purple-950/10 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-purple-300 pb-1 border-b border-purple-500/20">
-              <div className="flex items-center space-x-2">
-                <span>🛡️</span>
-                <span className="tracking-wider uppercase">ROOM E: QUALITY GATE & SECURITY VAULT</span>
+          <div className="p-2.5 sm:p-3 rounded-2xl border border-purple-500/30 bg-purple-950/10 space-y-2 w-full min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-purple-300 pb-1 border-b border-purple-500/20 min-w-0">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="shrink-0">🛡️</span>
+                <span className="tracking-wider uppercase break-words">ROOM E: QUALITY GATE & SECURITY VAULT</span>
               </div>
-              <span className="text-[9px] text-purple-400/80 font-normal">2 Audit Stations</span>
+              <span className="text-[9px] text-purple-400/80 font-normal shrink-0">2 Audit Stations</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5 w-full min-w-0">
               {securityWorkers.map(renderWorkerCard)}
             </div>
           </div>
@@ -265,15 +265,15 @@ export const AgentTown: React.FC<AgentTownProps> = ({
 
         {/* ROOM 6: TECH AUTOMATION & DEVICE CORE */}
         {(activeDepartment === 'ALL' || activeDepartment === 'TECH_DEV') && (
-          <div className="p-3 rounded-2xl border border-teal-500/30 bg-teal-950/10 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-teal-300 pb-1 border-b border-teal-500/20">
-              <div className="flex items-center space-x-2">
-                <span>💻</span>
-                <span className="tracking-wider uppercase">ROOM F: TECH DEV, DIAGNOSTICS & ANDROID BRIDGE</span>
+          <div className="p-2.5 sm:p-3 rounded-2xl border border-teal-500/30 bg-teal-950/10 space-y-2 w-full min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-bold text-teal-300 pb-1 border-b border-teal-500/20 min-w-0">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="shrink-0">💻</span>
+                <span className="tracking-wider uppercase break-words">ROOM F: TECH DEV, DIAGNOSTICS & ANDROID BRIDGE</span>
               </div>
-              <span className="text-[9px] text-teal-400/80 font-normal">6 Dev Stations</span>
+              <span className="text-[9px] text-teal-400/80 font-normal shrink-0">6 Dev Stations</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 w-full min-w-0">
               {techWorkers.map(renderWorkerCard)}
             </div>
           </div>

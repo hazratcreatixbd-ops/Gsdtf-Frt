@@ -80,10 +80,10 @@ export const StateIndicator: React.FC<StateIndicatorProps> = ({
   const status = getStatusBadge();
 
   return (
-    <header className="w-full flex items-center justify-between px-4 sm:px-6 pt-4 pb-2 z-20 max-w-2xl mx-auto">
+    <header className="w-full max-w-2xl mx-auto px-3 sm:px-6 pt-3 pb-2 z-20 flex flex-wrap items-center justify-between gap-2 min-w-0">
       {/* Brand */}
-      <div className="flex items-center space-x-2.5 shrink-0">
-        <div className="relative flex items-center justify-center w-9 h-9 rounded-xl overflow-hidden bg-slate-950 border border-cyan-400/40 shadow-[0_0_14px_rgba(6,182,212,0.35)]">
+      <div className="flex items-center space-x-2 shrink-0 min-w-0">
+        <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-slate-950 border border-cyan-400/40 shadow-[0_0_14px_rgba(6,182,212,0.35)] shrink-0">
           <img
             src={fridayLogo}
             alt="FRIDAY AI Core Logo"
@@ -91,23 +91,23 @@ export const StateIndicator: React.FC<StateIndicatorProps> = ({
             className="w-full h-full object-cover"
           />
         </div>
-        <div>
-          <h1 className="text-sm font-bold tracking-widest text-slate-100 font-mono">
+        <div className="min-w-0">
+          <h1 className="text-xs sm:text-sm font-bold tracking-widest text-slate-100 font-mono leading-tight">
             FRIDAY
           </h1>
-          <span className="text-[9px] font-mono uppercase text-slate-400 tracking-wider">
+          <span className="text-[8px] sm:text-[9px] font-mono uppercase text-slate-400 tracking-wider block leading-tight">
             AI Assistant
           </span>
         </div>
       </div>
 
       {/* Minimal State Pill & Info trigger */}
-      <div className="flex items-center space-x-2 shrink-0">
+      <div className="flex items-center flex-wrap justify-end gap-1.5 min-w-0 max-w-full">
         {onOpenWorld && (
           <button
             onClick={onOpenWorld}
             title="Enter FRIDAY World (Agent Town & Workspace — Part 11)"
-            className="shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded-full border border-cyan-400 bg-gradient-to-r from-cyan-950 via-cyan-900 to-blue-950 hover:from-cyan-900 hover:to-blue-900 text-cyan-200 hover:text-white font-mono text-xs font-bold tracking-wider shadow-[0_0_15px_rgba(6,182,212,0.45)] ring-1 ring-cyan-400/50 transition-all active:scale-95 cursor-pointer z-30"
+            className="shrink-0 flex items-center space-x-1 px-2.5 py-1 rounded-full border border-cyan-400 bg-gradient-to-r from-cyan-950 via-cyan-900 to-blue-950 hover:from-cyan-900 hover:to-blue-900 text-cyan-200 hover:text-white font-mono text-[10px] sm:text-xs font-bold tracking-wider shadow-[0_0_15px_rgba(6,182,212,0.45)] ring-1 ring-cyan-400/50 transition-all active:scale-95 cursor-pointer z-30"
           >
             <Compass className="w-3.5 h-3.5 text-cyan-400 animate-[spin_8s_linear_infinite]" />
             <span>WORLD</span>
@@ -115,10 +115,10 @@ export const StateIndicator: React.FC<StateIndicatorProps> = ({
         )}
 
         <div
-          className={`shrink-0 flex items-center space-x-2 px-3 py-1 rounded-full border backdrop-blur-md transition-all duration-300 ${status.badge}`}
+          className={`shrink-0 flex items-center space-x-1.5 px-2.5 py-1 rounded-full border backdrop-blur-md transition-all duration-300 ${status.badge}`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-          <span className="text-[10px] font-mono font-semibold tracking-widest">
+          <span className="text-[9px] sm:text-[10px] font-mono font-semibold tracking-widest">
             {status.label}
           </span>
         </div>

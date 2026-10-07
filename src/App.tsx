@@ -8,6 +8,7 @@ import { useFridayVoice } from './hooks/useFridayVoice';
 import { FridayCore } from './components/FridayCore';
 import { StateIndicator } from './components/StateIndicator';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
+import { CaptionsHUD } from './components/CaptionsHUD';
 import { ControlBar } from './components/ControlBar';
 import { ToolActionCard } from './components/ToolActionCard';
 import { SettingsModal } from './components/SettingsModal';
@@ -34,6 +35,7 @@ export default function App() {
     fridayVolume,
     isMuted,
     errorMessage,
+    transcriptions,
     recentTool,
     memories,
     tasks,
@@ -50,6 +52,7 @@ export default function App() {
   } = useFridayVoice();
 
   const [textInput, setTextInput] = useState('');
+  const [showCaptions, setShowCaptions] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showArchives, setShowArchives] = useState(false);
   const [showDeviceControl, setShowDeviceControl] = useState(false);
@@ -306,13 +309,15 @@ export default function App() {
 
       {/* Error notification banner if any */}
       {errorMessage && (
-        <div className="w-full max-w-sm mx-auto px-4 z-30">
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-rose-950/80 border border-rose-500/40 backdrop-blur-xl text-rose-200 text-xs shadow-lg animate-in fade-in duration-200">
-            <div className="flex items-center space-x-2 min-w-0">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span className="truncate">{errorMessage}</span>
+        <div className="w-full max-w-md mx-auto px-3 sm:px-4 z-30 min-w-0 shrink-0">
+          <div className="flex items-start justify-between gap-2 p-3 rounded-2xl bg-rose-950/85 border border-rose-500/40 backdrop-blur-xl text-rose-200 text-xs shadow-lg animate-in fade-in duration-200 w-full min-w-0">
+            <div className="flex items-start space-x-2 min-w-0 flex-1">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <span className="break-words [overflow-wrap:anywhere] leading-relaxed flex-1 min-w-0">
+                {errorMessage}
+              </span>
             </div>
-            <div className="flex items-center space-x-1 shrink-0 ml-2">
+            <div className="flex items-center space-x-1 shrink-0">
               {errorMessage.toLowerCase().includes('mic') && (
                 <button
                   onClick={async () => {
@@ -326,6 +331,14 @@ export default function App() {
                 >
                   <Mic className="w-3 h-3 text-rose-300" />
                   <span>Allow Mic</span>
+                </button>
+              )}
+              {errorMessage.toLowerCase().includes('settings') && (
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="px-2 py-0.5 rounded-lg bg-cyan-500/25 hover:bg-cyan-500/40 text-cyan-200 font-mono text-[10px] border border-cyan-500/40 transition-all"
+                >
+                  Settings
                 </button>
               )}
               <button
@@ -353,8 +366,8 @@ export default function App() {
         }}
       />
 
-      {/* Main Center Area: Large FRIDAY AI Core/Orb + Waveform OR FRIDAY In-App Browser */}
-      <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-4 z-10 my-auto w-full max-w-xl mx-auto overflow-hidden">
+      {/* Main Center Area: Large FRIDAY AI Core/Orb + Live Voice Response Text + Waveform OR FRIDAY In-App Browser */}
+      <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-4 z-10 w-full max-w-xl mx-auto min-h-0 min-w-0 overflow-y-auto overflow-x-hidden py-1">
         {isInAppBrowserOpen ? (
           <InAppBrowser
             initialUrl={inAppBrowserUrl}
@@ -364,7 +377,7 @@ export default function App() {
             }}
           />
         ) : (
-          <div className="flex flex-col items-center w-full max-w-xs sm:max-w-sm">
+          <div className="flex flex-col items-center justify-center w-full max-w-full min-w-0">
             {/* Large Central FRIDAY Core Orb */}
             <FridayCore
               state={state}
@@ -380,15 +393,36 @@ export default function App() {
               }}
             />
 
-            {/* Minimal State Description */}
-            <div className="mt-4 text-center">
-              <p className="text-xs sm:text-sm font-mono tracking-wider text-slate-300">
+            {/* Minimal State Description — Responsive, wraps cleanly on narrow mobile screens */}
+            <div className="mt-3 sm:mt-4 text-center w-full max-w-full px-2 min-w-0">
+              <p className="text-xs sm:text-sm font-mono tracking-wider text-slate-300 break-words [overflow-wrap:anywhere] leading-relaxed">
                 {getSubtext()}
               </p>
             </div>
 
+            {/* Live Voice Response / Dialogue Container (Wraps naturally and expands vertically on mobile) */}
+            {transcriptions.length > 0 && (
+              <div className="mt-2.5 w-full max-w-full min-w-0">
+                <CaptionsHUD
+                  transcriptions={transcriptions}
+                  isOpen={showCaptions}
+                  onClose={() => setShowCaptions(false)}
+                />
+                {!showCaptions && (
+                  <div className="text-center mt-1">
+                    <button
+                      onClick={() => setShowCaptions(true)}
+                      className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline"
+                    >
+                      Show Live Response ({transcriptions.length})
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Dynamic Audio-Reactive Waveform */}
-            <div className="mt-4 w-full max-w-[280px]">
+            <div className="mt-3 sm:mt-4 w-full max-w-[280px] px-2">
               <WaveformVisualizer
                 state={state}
                 userVolume={userVolume}

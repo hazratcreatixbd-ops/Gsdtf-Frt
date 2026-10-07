@@ -125,20 +125,20 @@ export const ManagerOperationsPanel: React.FC<ManagerOperationsPanelProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 font-mono select-none">
       <div className="relative w-full max-w-6xl h-[92vh] rounded-3xl border border-cyan-500/40 bg-[#030714] text-slate-100 shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col overflow-hidden">
         {/* TOP COMMAND STRIP */}
-        <header className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-cyan-500/30 bg-slate-950/95 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+        <header className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-6 py-2.5 sm:py-3 border-b border-cyan-500/30 bg-slate-950/95 shrink-0 min-w-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.3)] shrink-0">
               <Cpu className="w-5 h-5 text-cyan-400" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-sm sm:text-base font-black tracking-widest text-white uppercase">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                <h2 className="text-xs sm:text-base font-black tracking-widest text-white uppercase break-words">
                   FRIDAY CEO / MANAGER OPERATIONS
                 </h2>
-                <span className="text-[9px] px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-extrabold uppercase">
+                <span className="text-[9px] px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-extrabold uppercase shrink-0">
                   PART 13
                 </span>
-                <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold hidden sm:inline">
+                <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold hidden sm:inline shrink-0">
                   HERMES & CHRONOS ACTIVE
                 </span>
               </div>
@@ -148,23 +148,24 @@ export const ManagerOperationsPanel: React.FC<ManagerOperationsPanelProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 ml-auto">
             {/* Quick Demo Workflow Button */}
             <button
               onClick={handleRunDemoScenario}
               disabled={isExecuting}
               title="Dispatch Deterministic Test Scenario (Analyze AI Video Editing Market)"
-              className="flex items-center space-x-1 px-3 py-1.5 rounded-xl border border-cyan-400/80 bg-gradient-to-r from-cyan-950 via-cyan-900/60 to-blue-950 hover:from-cyan-900 hover:to-blue-900 text-cyan-200 hover:text-white font-bold text-[11px] tracking-wider transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)] active:scale-95 disabled:opacity-50 cursor-pointer"
+              className="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-xl border border-cyan-400/80 bg-gradient-to-r from-cyan-950 via-cyan-900/60 to-blue-950 hover:from-cyan-900 hover:to-blue-900 text-cyan-200 hover:text-white font-bold text-[10px] sm:text-[11px] tracking-wider transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)] active:scale-95 disabled:opacity-50 cursor-pointer whitespace-nowrap"
             >
-              <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              <span>RUN DEMO SCENARIO</span>
+              <Zap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="hidden sm:inline">RUN DEMO SCENARIO</span>
+              <span className="sm:hidden">DEMO</span>
             </button>
 
             {/* Pause / Resume Button */}
             <button
               onClick={handleTogglePause}
               title={workerTaskQueue.isQueuePaused() ? 'Resume Queue' : 'Pause Queue'}
-              className="p-1.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs flex items-center space-x-1 cursor-pointer"
+              className="p-1.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs flex items-center space-x-1 cursor-pointer shrink-0"
             >
               {workerTaskQueue.isQueuePaused() ? (
                 <Play className="w-4 h-4 text-emerald-400" />
@@ -177,7 +178,7 @@ export const ManagerOperationsPanel: React.FC<ManagerOperationsPanelProps> = ({
             <button
               onClick={onClose}
               title="Close Operations Panel (Return to Agent Town)"
-              className="p-1.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
             >
               <X className="w-5 h-5" />
             </button>

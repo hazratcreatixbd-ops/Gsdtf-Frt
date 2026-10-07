@@ -54,50 +54,59 @@ export const WorldCore: React.FC<WorldCoreProps> = ({
   const audioScale = Math.max(1, 1 + (state === 'speaking' ? fridayVolume * 0.35 : userVolume * 0.35));
 
   return (
-    <div className="relative flex items-center space-x-3 px-3.5 py-1.5 rounded-2xl border border-cyan-500/30 bg-[#030714]/90 backdrop-blur-xl shadow-[0_0_20px_rgba(6,182,212,0.15)] font-mono">
-      {/* Central Glowing AI Core Orb */}
-      <div className="relative flex items-center justify-center w-12 h-12 shrink-0">
-        {/* Outer Rotating Particle Ring */}
-        <div className="absolute inset-0 rounded-full border border-dashed border-cyan-400/40 animate-[spin_12s_linear_infinite]" />
-        
-        {/* Core Sphere */}
-        <div
-          onClick={onCoreClick}
-          style={{ transform: `scale(${audioScale})` }}
-          className={`relative flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-tr ${getCoreGlow()} border cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95`}
-          title="FRIDAY Core: Click to Start / Interrupt"
-        >
-          {/* Inner Neural Node */}
-          <div className="w-2.5 h-2.5 rounded-full bg-cyan-200 shadow-[0_0_10px_#67e8f9] animate-pulse" />
+    <div className="relative flex-1 w-full flex items-center justify-between gap-2 sm:gap-3.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-cyan-500/35 bg-[#030714]/95 backdrop-blur-xl shadow-[0_0_24px_rgba(6,182,212,0.18)] font-mono min-w-0 max-w-full">
+      {/* Subtle Ambient Inner Glow */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/[0.06] via-transparent to-blue-500/[0.08] pointer-events-none" />
+
+      {/* Left Group: Central Glowing AI Core Orb + Core Telemetry & Status Pill */}
+      <div className="relative z-10 flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+        <div className="relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 shrink-0">
+          {/* Outer Rotating Particle Ring */}
+          <div className="absolute inset-0 rounded-full border border-dashed border-cyan-400/45 animate-[spin_12s_linear_infinite]" />
+
+          {/* Core Sphere */}
+          <div
+            onClick={onCoreClick}
+            style={{ transform: `scale(${audioScale})` }}
+            className={`relative flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr ${getCoreGlow()} border cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95`}
+            title="FRIDAY Core: Click to Start / Interrupt"
+          >
+            {/* Inner Neural Node */}
+            <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-cyan-200 shadow-[0_0_10px_#67e8f9] animate-pulse" />
+          </div>
+        </div>
+
+        {/* Core Telemetry & Status Pill */}
+        <div className="flex flex-col min-w-0 flex-1">
+          <div className="flex items-center space-x-1 sm:space-x-1.5 min-w-0">
+            <Cpu className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-extrabold text-white tracking-wider sm:tracking-widest truncate">
+              FRIDAY CORE
+            </span>
+            <span
+              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ml-1 shrink-0 ${
+                state === 'speaking'
+                  ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e] animate-pulse'
+                  : state === 'listening'
+                  ? 'bg-cyan-400 shadow-[0_0_6px_#22d3ee] animate-ping'
+                  : state === 'thinking'
+                  ? 'bg-indigo-400 animate-spin'
+                  : 'bg-slate-500'
+              }`}
+            />
+          </div>
+          <div className="flex items-center space-x-1.5 sm:space-x-2 mt-0.5 min-w-0">
+            <span className="text-[9px] sm:text-[10px] text-cyan-300 font-bold tracking-wider uppercase truncate">
+              {getStatusLabel()}
+            </span>
+            <span className="text-[8px] sm:text-[9px] text-slate-400 hidden sm:inline truncate">
+              • Live Neural HUD
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Core Telemetry & Status Pill */}
-      <div className="flex flex-col">
-        <div className="flex items-center space-x-1.5">
-          <Cpu className="w-3 h-3 text-cyan-400" />
-          <span className="text-[11px] font-bold text-white tracking-widest">FRIDAY CORE</span>
-          <span
-            className={`w-1.5 h-1.5 rounded-full ml-1 ${
-              state === 'speaking'
-                ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e] animate-pulse'
-                : state === 'listening'
-                ? 'bg-cyan-400 shadow-[0_0_6px_#22d3ee] animate-ping'
-                : state === 'thinking'
-                ? 'bg-indigo-400 animate-spin'
-                : 'bg-slate-500'
-            }`}
-          />
-        </div>
-        <div className="flex items-center space-x-2 mt-0.5">
-          <span className="text-[9px] text-cyan-300 font-semibold tracking-wider uppercase">
-            {getStatusLabel()}
-          </span>
-          <span className="text-[8px] text-slate-500 hidden sm:inline">• Live Neural HUD</span>
-        </div>
-      </div>
-
-      {/* Quick Action: Start AI / Mic Toggle */}
+      {/* Right Action: Start AI / Mic Toggle */}
       <button
         onClick={() => {
           if (state === 'disconnected') {
@@ -106,9 +115,9 @@ export const WorldCore: React.FC<WorldCoreProps> = ({
             onToggleMute();
           }
         }}
-        className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all shrink-0 ml-1 active:scale-95 ${
+        className={`relative z-10 flex items-center justify-center space-x-1 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-[9px] sm:text-[11px] font-extrabold tracking-wider transition-all shrink-0 active:scale-95 cursor-pointer ${
           state === 'disconnected'
-            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+            ? 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.45)]'
             : isMuted
             ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
             : 'bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30'
@@ -118,12 +127,12 @@ export const WorldCore: React.FC<WorldCoreProps> = ({
           <span>CONNECT</span>
         ) : isMuted ? (
           <>
-            <MicOff className="w-3 h-3 text-amber-400" />
+            <MicOff className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
             <span>UNMUTE</span>
           </>
         ) : (
           <>
-            <Mic className="w-3 h-3 text-cyan-400" />
+            <Mic className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400 shrink-0" />
             <span>MUTE</span>
           </>
         )}

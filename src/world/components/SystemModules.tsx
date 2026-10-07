@@ -58,9 +58,9 @@ export const SystemModules: React.FC<SystemModulesProps> = ({ onOpenSettings, on
   ];
 
   return (
-    <div className="relative flex items-center">
-      {/* 2x2 Grid of System Modules */}
-      <div className="grid grid-cols-2 gap-1.5 font-mono">
+    <div className="relative flex items-center shrink-0 min-w-0">
+      {/* Clean 2x2 Grid of System Modules: [MEMORY] [SKILLS] / [SOUL] [SETTINGS] */}
+      <div className="grid grid-cols-2 gap-1 sm:gap-1.5 font-mono shrink-0">
         {modules.map((mod) => (
           <button
             key={mod.name}
@@ -75,16 +75,16 @@ export const SystemModules: React.FC<SystemModulesProps> = ({ onOpenSettings, on
                 setActiveModuleModal(mod.name);
               }
             }}
-            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xl border ${mod.border} ${mod.bg} ${mod.text} hover:scale-105 hover:brightness-125 transition-all text-[10px] font-bold tracking-wider shadow-sm active:scale-95 cursor-pointer`}
+            className={`flex items-center justify-center sm:justify-start space-x-1 px-1.5 sm:px-2.5 py-1 rounded-xl border ${mod.border} ${mod.bg} ${mod.text} hover:scale-105 hover:brightness-125 transition-all text-[8.5px] sm:text-[10px] font-bold tracking-wider shadow-sm active:scale-95 cursor-pointer whitespace-nowrap`}
           >
-            {mod.icon}
+            <span className="shrink-0">{mod.icon}</span>
             <span>[{mod.label}]</span>
           </button>
         ))}
       </div>
 
       {/* Futuristic Horizontal Circuit Line branching into Core */}
-      <div className="hidden sm:flex items-center mx-2 w-8 h-8 pointer-events-none">
+      <div className="hidden xl:flex items-center mx-2 w-7 h-7 shrink-0 pointer-events-none">
         <svg className="w-full h-full stroke-cyan-500/50 fill-none" viewBox="0 0 32 32">
           <line x1="0" y1="8" x2="16" y2="16" stroke="#38bdf8" strokeWidth="1.5" />
           <line x1="0" y1="24" x2="16" y2="16" stroke="#10b981" strokeWidth="1.5" />

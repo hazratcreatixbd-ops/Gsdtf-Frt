@@ -146,8 +146,8 @@ export const ToolActionCard: React.FC<ToolActionCardProps> = ({ toolItem, onDism
         {/* Shimmer line */}
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse" />
 
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
+        <div className="flex items-start justify-between gap-2 min-w-0">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 shrink-0">
               {isWebsite ? (
                 <Globe className="w-5 h-5" />
@@ -201,8 +201,8 @@ export const ToolActionCard: React.FC<ToolActionCardProps> = ({ toolItem, onDism
                 <CheckCircle2 className="w-5 h-5" />
               )}
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <span className="text-xs font-mono font-semibold tracking-wider text-cyan-300 uppercase">
                   {getCategory()}
                 </span>
@@ -218,7 +218,7 @@ export const ToolActionCard: React.FC<ToolActionCardProps> = ({ toolItem, onDism
                   </span>
                 )}
               </div>
-              <h3 className="text-sm font-semibold text-slate-100 font-sans mt-0.5 truncate max-w-[200px]">
+              <h3 className="text-sm font-semibold text-slate-100 font-sans mt-0.5 break-words [overflow-wrap:anywhere]">
                 {getTitle()}
               </h3>
             </div>
@@ -226,7 +226,7 @@ export const ToolActionCard: React.FC<ToolActionCardProps> = ({ toolItem, onDism
 
           <button
             onClick={onDismiss}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-200 transition-colors shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -234,15 +234,15 @@ export const ToolActionCard: React.FC<ToolActionCardProps> = ({ toolItem, onDism
 
         {/* Content details */}
         {linkUrl && (
-          <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-mono truncate max-w-[190px]">
+          <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2 min-w-0">
+            <span className="text-xs text-slate-400 font-mono break-all line-clamp-1 flex-1 min-w-0">
               {linkUrl}
             </span>
             <a
               href={linkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-medium transition-colors"
+              className="shrink-0 inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-medium transition-colors"
             >
               <span>{isPlay ? 'Watch' : isMap ? 'View Map' : isEmail ? 'Send' : 'Open'}</span>
               <ExternalLink className="w-3 h-3" />

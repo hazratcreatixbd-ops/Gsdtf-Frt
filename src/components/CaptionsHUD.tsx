@@ -24,18 +24,18 @@ export const CaptionsHUD: React.FC<CaptionsHUDProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 z-20 animate-in fade-in slide-in-from-bottom-3 duration-300">
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-950/80 backdrop-blur-xl p-3 shadow-2xl">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800/60 text-xs font-mono text-slate-400">
-          <div className="flex items-center space-x-1.5 text-cyan-400">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="font-semibold tracking-wider uppercase text-[10px]">
+    <div className="w-full max-w-full sm:max-w-md mx-auto px-3 sm:px-4 z-20 min-w-0 animate-in fade-in slide-in-from-bottom-3 duration-300">
+      <div className="w-full max-w-full min-w-0 rounded-2xl border border-slate-800/80 bg-slate-950/90 backdrop-blur-xl p-3 shadow-2xl">
+        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-800/60 text-xs font-mono text-slate-400 min-w-0">
+          <div className="flex items-center space-x-1.5 text-cyan-400 min-w-0">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span className="font-semibold tracking-wider uppercase text-[10px] truncate">
               Live Dialogue Stream
             </span>
           </div>
           <button
             onClick={onClose}
-            className="flex items-center space-x-1 text-[11px] text-slate-400 hover:text-slate-200"
+            className="flex items-center space-x-1 text-[11px] text-slate-400 hover:text-slate-200 shrink-0"
           >
             <span>Minimize</span>
             <ChevronDown className="w-3.5 h-3.5" />
@@ -43,16 +43,16 @@ export const CaptionsHUD: React.FC<CaptionsHUDProps> = ({
         </div>
 
         {/* Captions scroll box */}
-        <div className="max-h-36 overflow-y-auto space-y-2 py-2 pr-1 scrollbar-thin scrollbar-thumb-slate-800">
+        <div className="max-h-36 sm:max-h-44 overflow-y-auto overflow-x-hidden space-y-2 py-2 pr-1 scrollbar-thin scrollbar-thumb-slate-800 w-full min-w-0">
           {transcriptions.length === 0 ? (
-            <p className="text-xs text-slate-500 font-mono text-center py-2 italic">
+            <p className="text-xs text-slate-500 font-mono text-center py-2 italic break-words">
               Speak to FRIDAY to see live spoken dialogue...
             </p>
           ) : (
             transcriptions.slice(-6).map((item) => (
               <div
                 key={item.id}
-                className={`flex items-start space-x-2 text-xs leading-relaxed ${
+                className={`flex items-start space-x-2 text-xs leading-relaxed w-full min-w-0 ${
                   item.role === 'friday' ? 'text-cyan-200' : 'text-slate-300'
                 }`}
               >
@@ -69,11 +69,13 @@ export const CaptionsHUD: React.FC<CaptionsHUDProps> = ({
                     <User className="w-2.5 h-2.5" />
                   )}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0 break-words [overflow-wrap:anywhere]">
                   <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500 mr-1.5">
                     {item.role === 'friday' ? 'FRIDAY' : 'You'}:
                   </span>
-                  <span className="font-sans font-normal">{item.text}</span>
+                  <span className="font-sans font-normal break-words [overflow-wrap:anywhere]">
+                    {item.text}
+                  </span>
                 </div>
               </div>
             ))

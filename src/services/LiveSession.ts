@@ -28,6 +28,29 @@ export class LiveSession {
   private isIntentionalClose = false;
   private pingInterval: number | null = null;
 
+  public static getServerBaseUrl(): string {
+    if (typeof window === 'undefined') return '';
+    try {
+      const saved = localStorage.getItem('friday_server_url')?.trim();
+      if (saved) {
+        return saved.replace(/\/+$/, '');
+      }
+    } catch {}
+    const envUrl = (import.meta as any).env?.VITE_FRIDAY_SERVER_URL?.trim();
+    if (envUrl) {
+      return envUrl.replace(/\/+$/, '');
+    }
+    return '';
+  }
+
+  public static isBundledLocalOrigin(): boolean {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.location.hostname === 'appassets.androidplatform.net' ||
+      window.location.protocol === 'file:'
+    );
+  }
+
   constructor(callbacks: LiveSessionCallbacks) {
     this.callbacks = callbacks;
   }
@@ -89,8 +112,27 @@ export class LiveSession {
       });
 
       // 3. Connect WebSocket to server
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/live`;
+      const customBase = LiveSession.getServerBaseUrl();
+      if (!customBase && LiveSession.isBundledLocalOrigin()) {
+        // Running inside standalone Android APK without a configured remote/local backend server URL:
+        // Never attempt a fake wss://appassets.androidplatform.net/api/live socket or claim CONNECTED.
+        this.callbacks.onError?.(
+          'OFFLINE / SERVER UNAVAILABLE: Running from local Android bundle. Local tools, World, Memory, and Device Control are active. Configure FRIDAY Server URL in Settings for live cloud voice.'
+        );
+        this.disconnect();
+        return;
+      }
+
+      let wsUrl = '';
+      if (customBase) {
+        const wsBase = customBase
+          .replace(/^https:/i, 'wss:')
+          .replace(/^http:/i, 'ws:');
+        wsUrl = `${wsBase}/api/live`;
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}/api/live`;
+      }
 
       this.ws = new WebSocket(wsUrl);
 
@@ -174,7 +216,9 @@ export class LiveSession {
 
       this.ws.onerror = (e) => {
         console.error('WebSocket connection error:', e);
-        this.callbacks.onError?.('Network connection to FRIDAY server failed.');
+        this.callbacks.onError?.(
+          'OFFLINE / SERVER UNAVAILABLE: Network connection to FRIDAY server failed.'
+        );
       };
 
       this.ws.onclose = () => {

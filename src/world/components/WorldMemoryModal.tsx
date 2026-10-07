@@ -311,20 +311,20 @@ export const WorldMemoryModal: React.FC<WorldMemoryModalProps> = ({ isOpen, onCl
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 font-mono select-none">
       <div className="relative w-full max-w-6xl h-[92vh] rounded-3xl border border-cyan-500/40 bg-[#030714] text-slate-100 shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col overflow-hidden">
         {/* TOP COMMAND STRIP */}
-        <header className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-cyan-500/30 bg-slate-950/95 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+        <header className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-6 py-2.5 sm:py-3 border-b border-cyan-500/30 bg-slate-950/95 shrink-0 min-w-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.3)] shrink-0">
               <Bookmark className="w-5 h-5 text-cyan-400" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-sm sm:text-base font-black tracking-widest text-white uppercase">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                <h2 className="text-xs sm:text-base font-black tracking-widest text-white uppercase break-words">
                   FRIDAY MEMORY CORE
                 </h2>
-                <span className="text-[9px] px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-extrabold uppercase">
+                <span className="text-[9px] px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-extrabold uppercase shrink-0">
                   PART 12
                 </span>
-                <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold hidden sm:inline">
+                <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold hidden sm:inline shrink-0">
                   DECISION ENGINE ACTIVE
                 </span>
               </div>
@@ -334,28 +334,28 @@ export const WorldMemoryModal: React.FC<WorldMemoryModalProps> = ({ isOpen, onCl
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0 ml-auto">
             {/* View Mode Switcher: ALL MEMORIES vs RESEARCH */}
-            <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs">
+            <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs overflow-x-auto max-w-full">
               <button
                 onClick={() => setViewMode('all')}
-                className={`px-3 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                className={`px-2 sm:px-3 py-1 rounded-lg font-bold text-[10px] sm:text-[11px] transition-all cursor-pointer whitespace-nowrap ${
                   viewMode === 'all'
                     ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                ALL MEMORIES ({memories.length})
+                ALL ({memories.length})
               </button>
               <button
                 onClick={() => setViewMode('research')}
-                className={`px-3 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                className={`px-2 sm:px-3 py-1 rounded-lg font-bold text-[10px] sm:text-[11px] transition-all cursor-pointer whitespace-nowrap ${
                   viewMode === 'research'
                     ? 'bg-indigo-500/25 text-indigo-200 border border-indigo-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                RESEARCH FINDINGS ({researchItems.length})
+                RESEARCH ({researchItems.length})
               </button>
             </div>
 
@@ -363,17 +363,18 @@ export const WorldMemoryModal: React.FC<WorldMemoryModalProps> = ({ isOpen, onCl
             <button
               onClick={handleRunTestFlow}
               title="Execute development-only test flow through MemoryDecisionEngine"
-              className="flex items-center space-x-1 px-3 py-1.5 rounded-xl border border-cyan-400/80 bg-gradient-to-r from-cyan-950 via-cyan-900/60 to-blue-950 hover:from-cyan-900 hover:to-blue-900 text-cyan-200 hover:text-white font-bold text-[11px] tracking-wider transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)] active:scale-95 cursor-pointer"
+              className="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-xl border border-cyan-400/80 bg-gradient-to-r from-cyan-950 via-cyan-900/60 to-blue-950 hover:from-cyan-900 hover:to-blue-900 text-cyan-200 hover:text-white font-bold text-[10px] sm:text-[11px] tracking-wider transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)] active:scale-95 cursor-pointer whitespace-nowrap"
             >
-              <Zap className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              <span>TEST MEMORY</span>
+              <Zap className="w-3.5 h-3.5 text-cyan-400 animate-pulse shrink-0" />
+              <span className="hidden sm:inline">TEST MEMORY</span>
+              <span className="sm:hidden">TEST</span>
             </button>
 
             {/* Close / Return to World */}
             <button
               onClick={onClose}
               title="Close Memory Core (Return to Agent Town)"
-              className="p-1.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
             >
               <X className="w-5 h-5" />
             </button>

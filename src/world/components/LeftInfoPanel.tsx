@@ -1,33 +1,51 @@
 import React from 'react';
-import { Radio, Wifi, Globe, Activity, Eye, ShieldAlert } from 'lucide-react';
+import { Radio, Globe, Activity } from 'lucide-react';
+import { FridayState } from '../../types/friday';
 
-export const LeftInfoPanel: React.FC = () => {
+interface LeftInfoPanelProps {
+  state?: FridayState;
+}
+
+export const LeftInfoPanel: React.FC<LeftInfoPanelProps> = ({ state = 'disconnected' }) => {
+  const isConnected = state === 'listening' || state === 'speaking' || state === 'thinking';
+  const isConnecting = state === 'connecting';
+
   return (
-    <div className="flex flex-col space-y-3 font-mono text-xs w-full max-w-full shrink-0">
+    <div className="flex flex-col space-y-3 font-mono text-xs w-full min-w-0 max-w-full shrink-0">
       {/* 1. Media Link Box */}
-      <div className="p-3 rounded-2xl border border-cyan-500/30 bg-[#040816]/90 backdrop-blur-xl shadow-lg space-y-2">
-        <div className="flex items-center justify-between text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
-          <div className="flex items-center space-x-1">
-            <Radio className="w-3 h-3 text-cyan-400 animate-pulse" />
-            <span>MEDIA LINK</span>
+      <div className="p-3 rounded-2xl border border-cyan-500/30 bg-[#040816]/90 backdrop-blur-xl shadow-lg space-y-2 w-full min-w-0">
+        <div className="flex items-center justify-between text-[10px] text-cyan-400 font-bold uppercase tracking-wider gap-2">
+          <div className="flex items-center space-x-1 min-w-0">
+            <Radio className={`w-3 h-3 shrink-0 ${isConnected ? 'text-cyan-400 animate-pulse' : 'text-slate-500'}`} />
+            <span className="truncate">MEDIA LINK</span>
           </div>
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">
-            ONLINE
+          <span
+            className={`text-[9px] px-1.5 py-0.5 rounded border shrink-0 ${
+              isConnected
+                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                : isConnecting
+                ? 'bg-blue-950/60 border-blue-500/40 text-blue-300 animate-pulse'
+                : 'bg-slate-900 border-slate-700 text-slate-400'
+            }`}
+          >
+            {isConnected ? 'CONNECTED' : isConnecting ? 'CONNECTING' : 'STANDBY / OFFLINE'}
           </span>
         </div>
 
         <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[10px] text-slate-400 space-y-1">
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-2">
             <span className="text-slate-500">Telemetry:</span>
-            <span className="text-slate-200">WebSocket /api/live</span>
+            <span className="text-slate-200 truncate">WebSocket /api/live</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-2">
             <span className="text-slate-500">Audio Rate:</span>
             <span className="text-slate-200">24kHz PCM</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Latency:</span>
-            <span className="text-emerald-400">&lt; 180ms</span>
+          <div className="flex justify-between gap-2">
+            <span className="text-slate-500">Session:</span>
+            <span className={isConnected ? 'text-emerald-400' : isConnecting ? 'text-blue-400' : 'text-slate-400'}>
+              {isConnected ? 'LIVE STREAM' : isConnecting ? 'HANDSHAKE...' : 'DISCONNECTED'}
+            </span>
           </div>
         </div>
       </div>

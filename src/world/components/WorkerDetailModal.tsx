@@ -29,22 +29,22 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="relative w-full max-w-lg rounded-3xl border border-cyan-500/40 bg-[#040816] text-slate-100 p-5 shadow-2xl space-y-4 font-mono">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-3 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overflow-x-hidden rounded-3xl border border-cyan-500/40 bg-[#040816] text-slate-100 p-4 sm:p-5 shadow-2xl space-y-4 font-mono min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-xl shadow-inner">
+        <div className="flex items-start justify-between gap-2 border-b border-slate-800 pb-3 min-w-0">
+          <div className="flex items-start space-x-2.5 sm:space-x-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-xl shadow-inner shrink-0">
               {worker.avatar}
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-base font-bold text-white">{worker.name}</h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-white break-words">{worker.name}</h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 shrink-0">
                   {worker.role}
                 </span>
                 <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                     worker.status === 'WORKING'
                       ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 animate-pulse'
                       : worker.status === 'READY'
@@ -55,11 +55,11 @@ export const WorkerDetailModal: React.FC<WorkerDetailModalProps> = ({
                   {worker.status}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">{worker.description}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5 break-words">{worker.description}</p>
             </div>
           </div>
 
-          <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-white">
+          <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-white shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>

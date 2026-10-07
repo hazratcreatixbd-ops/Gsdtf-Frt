@@ -39,7 +39,11 @@ export function useFridayVoice() {
 
   // Fetch initial storage from backend on mount
   useEffect(() => {
-    fetch('/api/storage')
+    const baseUrl = LiveSession.getServerBaseUrl();
+    if (!baseUrl && LiveSession.isBundledLocalOrigin()) {
+      return;
+    }
+    fetch(`${baseUrl}/api/storage`)
       .then((res) => res.json())
       .then((data) => {
         if (data.memories && Array.isArray(data.memories)) {
@@ -65,7 +69,9 @@ export function useFridayVoice() {
       localStorage.setItem(LOCAL_STORAGE_MEMORIES_KEY, JSON.stringify(newMemories));
     } catch {}
     sessionRef.current?.syncStorage(newMemories, tasks);
-    fetch('/api/storage', {
+    const baseUrl = LiveSession.getServerBaseUrl();
+    if (!baseUrl && LiveSession.isBundledLocalOrigin()) return;
+    fetch(`${baseUrl}/api/storage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memories: newMemories, tasks }),
@@ -79,7 +85,9 @@ export function useFridayVoice() {
       localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(newTasks));
     } catch {}
     sessionRef.current?.syncStorage(memories, newTasks);
-    fetch('/api/storage', {
+    const baseUrl = LiveSession.getServerBaseUrl();
+    if (!baseUrl && LiveSession.isBundledLocalOrigin()) return;
+    fetch(`${baseUrl}/api/storage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memories, tasks: newTasks }),
