@@ -307,14 +307,20 @@ export default function App() {
         onOpenWorld={handleOpenWorld}
       />
 
-      {/* Error notification banner if any */}
+      {/* Compact Error / Offline Notification Banner (Truthful status, max 2 lines on mobile) */}
       {errorMessage && (
-        <div className="w-full max-w-md mx-auto px-3 sm:px-4 z-30 min-w-0 shrink-0">
-          <div className="flex items-start justify-between gap-2 p-3 rounded-2xl bg-rose-950/85 border border-rose-500/40 backdrop-blur-xl text-rose-200 text-xs shadow-lg animate-in fade-in duration-200 w-full min-w-0">
-            <div className="flex items-start space-x-2 min-w-0 flex-1">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <span className="break-words [overflow-wrap:anywhere] leading-relaxed flex-1 min-w-0">
-                {errorMessage}
+        <div className="w-full max-w-md mx-auto px-3 sm:px-4 z-30 min-w-0 shrink-0 mb-0.5">
+          <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 sm:p-2.5 rounded-xl bg-rose-950/85 border border-rose-500/40 backdrop-blur-xl text-rose-200 text-[11px] sm:text-xs shadow-md animate-in fade-in duration-200 w-full min-w-0">
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span
+                title={errorMessage}
+                className="line-clamp-2 sm:line-clamp-none break-words [overflow-wrap:anywhere] leading-snug flex-1 min-w-0"
+              >
+                {errorMessage.includes('OFFLINE / SERVER UNAVAILABLE:') &&
+                errorMessage.toLowerCase().includes('local android bundle')
+                  ? 'OFFLINE / SERVER UNAVAILABLE: Local tools, World & Memory active. Configure Server in Settings.'
+                  : errorMessage}
               </span>
             </div>
             <div className="flex items-center space-x-1 shrink-0">
@@ -326,17 +332,18 @@ export default function App() {
                       connect();
                     }
                   }}
-                  className="px-2 py-0.5 rounded-lg bg-rose-500/30 hover:bg-rose-500/50 text-rose-100 font-mono text-[10px] border border-rose-500/40 flex items-center space-x-1 transition-all"
+                  className="px-2 py-0.5 rounded-lg bg-rose-500/30 hover:bg-rose-500/50 text-rose-100 font-mono text-[10px] border border-rose-500/40 flex items-center space-x-1 transition-all cursor-pointer"
                   title="Grant Microphone Access"
                 >
                   <Mic className="w-3 h-3 text-rose-300" />
                   <span>Allow Mic</span>
                 </button>
               )}
-              {errorMessage.toLowerCase().includes('settings') && (
+              {(errorMessage.toLowerCase().includes('settings') ||
+                errorMessage.includes('OFFLINE / SERVER UNAVAILABLE')) && (
                 <button
                   onClick={() => setShowSettings(true)}
-                  className="px-2 py-0.5 rounded-lg bg-cyan-500/25 hover:bg-cyan-500/40 text-cyan-200 font-mono text-[10px] border border-cyan-500/40 transition-all"
+                  className="px-2 py-0.5 rounded-lg bg-cyan-500/25 hover:bg-cyan-500/40 text-cyan-200 font-mono text-[10px] border border-cyan-500/40 transition-all cursor-pointer"
                 >
                   Settings
                 </button>
@@ -346,8 +353,8 @@ export default function App() {
                   clearError();
                   connect();
                 }}
-                className="p-1 rounded hover:bg-rose-900/50 text-rose-300"
-                title="Retry"
+                className="p-1 rounded-lg hover:bg-rose-900/50 text-rose-300 cursor-pointer"
+                title="Retry Connection"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
@@ -367,7 +374,7 @@ export default function App() {
       />
 
       {/* Main Center Area: Large FRIDAY AI Core/Orb + Live Voice Response Text + Waveform OR FRIDAY In-App Browser */}
-      <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-4 z-10 w-full max-w-xl mx-auto min-h-0 min-w-0 overflow-y-auto overflow-x-hidden py-1">
+      <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-4 z-10 w-full max-w-xl mx-auto min-h-0 min-w-0 overflow-y-auto overflow-x-hidden py-0.5">
         {isInAppBrowserOpen ? (
           <InAppBrowser
             initialUrl={inAppBrowserUrl}
@@ -394,7 +401,7 @@ export default function App() {
             />
 
             {/* Minimal State Description — Responsive, wraps cleanly on narrow mobile screens */}
-            <div className="mt-3 sm:mt-4 text-center w-full max-w-full px-2 min-w-0">
+            <div className="mt-1 sm:mt-3 text-center w-full max-w-full px-2 min-w-0">
               <p className="text-xs sm:text-sm font-mono tracking-wider text-slate-300 break-words [overflow-wrap:anywhere] leading-relaxed">
                 {getSubtext()}
               </p>
@@ -402,7 +409,7 @@ export default function App() {
 
             {/* Live Voice Response / Dialogue Container (Wraps naturally and expands vertically on mobile) */}
             {transcriptions.length > 0 && (
-              <div className="mt-2.5 w-full max-w-full min-w-0">
+              <div className="mt-2 w-full max-w-full min-w-0">
                 <CaptionsHUD
                   transcriptions={transcriptions}
                   isOpen={showCaptions}
@@ -422,7 +429,7 @@ export default function App() {
             )}
 
             {/* Dynamic Audio-Reactive Waveform */}
-            <div className="mt-3 sm:mt-4 w-full max-w-[280px] px-2">
+            <div className="mt-1.5 sm:mt-3 w-full max-w-[260px] sm:max-w-[280px] px-2">
               <WaveformVisualizer
                 state={state}
                 userVolume={userVolume}
@@ -443,7 +450,7 @@ export default function App() {
       />
 
       {/* Text Command Input Bar (Supports Silent & Permission-Denied environments) */}
-      <div className="w-full max-w-sm mx-auto px-6 mb-2 z-20">
+      <div className="w-full max-w-sm mx-auto px-4 sm:px-6 mb-1.5 z-20 shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();

@@ -256,17 +256,17 @@ export const FridayCore: React.FC<FridayCoreProps> = ({
   }, []);
 
   return (
-    <div className="relative flex flex-col items-center justify-center select-none my-auto">
+    <div className="relative flex flex-col items-center justify-center select-none">
       {/* Outer ambient red & blue futuristic glow aura */}
       <div
         className={`absolute rounded-full transition-all duration-700 pointer-events-none ${
           state === 'speaking'
-            ? 'w-80 h-80 sm:w-96 sm:h-96 bg-gradient-to-tr from-rose-600/30 via-cyan-500/25 to-blue-600/30 blur-3xl'
+            ? 'w-72 h-72 sm:w-96 sm:h-96 bg-gradient-to-tr from-rose-600/30 via-cyan-500/25 to-blue-600/30 blur-3xl'
             : state === 'listening'
-            ? 'w-72 h-72 sm:w-88 sm:h-88 bg-gradient-to-tr from-cyan-500/25 via-blue-600/20 to-rose-600/20 blur-3xl'
+            ? 'w-64 h-64 sm:w-88 sm:h-88 bg-gradient-to-tr from-cyan-500/25 via-blue-600/20 to-rose-600/20 blur-3xl'
             : state === 'connecting'
-            ? 'w-64 h-64 bg-cyan-600/20 blur-2xl animate-pulse'
-            : 'w-56 h-56 bg-slate-800/15 blur-2xl'
+            ? 'w-60 h-60 sm:w-64 sm:h-64 bg-cyan-600/20 blur-2xl animate-pulse'
+            : 'w-52 h-52 sm:w-56 sm:h-56 bg-slate-800/15 blur-2xl'
         }`}
       />
 
@@ -281,65 +281,71 @@ export const FridayCore: React.FC<FridayCoreProps> = ({
             ? 'Interrupt FRIDAY'
             : 'FRIDAY listening'
         }
-        className="relative z-10 group cursor-pointer focus:outline-none transition-transform duration-300 active:scale-95 touch-manipulation"
+        className="relative z-10 group cursor-pointer focus:outline-none transition-transform duration-300 active:scale-95 touch-manipulation flex flex-col items-center"
       >
-        <canvas
-          ref={canvasRef}
-          width={380}
-          height={380}
-          className="w-72 h-72 sm:w-84 sm:h-84 drop-shadow-[0_0_35px_rgba(0,195,255,0.25)]"
-        />
+        <div className="relative flex items-center justify-center">
+          <canvas
+            ref={canvasRef}
+            width={380}
+            height={380}
+            className="w-56 h-56 sm:w-80 sm:h-80 drop-shadow-[0_0_35px_rgba(0,195,255,0.25)]"
+          />
 
-        {/* Central Tactical Icon Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          {state === 'disconnected' && (
-            <div className="flex flex-col items-center">
-              <div className="w-14 h-14 rounded-full border border-cyan-400/50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center text-cyan-300 shadow-[0_0_25px_rgba(0,195,255,0.35)] transition-all group-hover:scale-105 overflow-hidden">
-                <img
-                  src="./friday-logo.svg"
-                  alt="FRIDAY Core"
-                  referrerPolicy="no-referrer"
-                  className="w-11 h-11 object-contain rounded-full"
-                />
+          {/* Central Tactical Icon Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {state === 'disconnected' && (
+              <div className="flex flex-col items-center">
+                <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border border-cyan-400/50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center text-cyan-300 shadow-[0_0_25px_rgba(0,195,255,0.35)] transition-all group-hover:scale-105 overflow-hidden">
+                  <img
+                    src="./friday-logo.svg"
+                    alt="FRIDAY Core"
+                    referrerPolicy="no-referrer"
+                    className="w-10 h-10 sm:w-11 sm:h-11 object-contain rounded-full"
+                  />
+                </div>
               </div>
-              <span className="mt-3 text-[11px] font-mono tracking-widest text-cyan-300/90 uppercase font-semibold">
-                Tap to Awaken
-              </span>
-            </div>
-          )}
+            )}
 
-          {state === 'connecting' && (
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 border-2 border-cyan-400/30 border-t-cyan-400 border-b-rose-500 rounded-full animate-spin" />
-              <span className="mt-3 text-[10px] font-mono tracking-widest text-cyan-300 uppercase">
-                Connecting
-              </span>
-            </div>
-          )}
-
-          {state === 'listening' && (
-            <div className="flex flex-col items-center">
-              <div className="w-13 h-13 rounded-full border border-cyan-400/40 bg-slate-950/40 backdrop-blur-md flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(0,195,255,0.3)]">
-                {isMuted ? (
-                  <MicOff className="w-6 h-6 text-rose-400" />
-                ) : (
-                  <div className="relative">
-                    <Mic className="w-6 h-6 text-cyan-300" />
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping" />
-                  </div>
-                )}
+            {state === 'connecting' && (
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 border-2 border-cyan-400/30 border-t-cyan-400 border-b-rose-500 rounded-full animate-spin" />
+                <span className="mt-3 text-[10px] font-mono tracking-widest text-cyan-300 uppercase">
+                  Connecting
+                </span>
               </div>
-            </div>
-          )}
+            )}
 
-          {state === 'speaking' && (
-            <div className="flex flex-col items-center">
-              <div className="w-13 h-13 rounded-full border border-rose-500/50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center text-rose-300 shadow-[0_0_20px_rgba(255,38,75,0.35)]">
-                <Hand className="w-6 h-6 text-rose-300 animate-pulse" />
+            {state === 'listening' && (
+              <div className="flex flex-col items-center">
+                <div className="w-13 h-13 rounded-full border border-cyan-400/40 bg-slate-950/40 backdrop-blur-md flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(0,195,255,0.3)]">
+                  {isMuted ? (
+                    <MicOff className="w-6 h-6 text-rose-400" />
+                  ) : (
+                    <div className="relative">
+                      <Mic className="w-6 h-6 text-cyan-300" />
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping" />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {state === 'speaking' && (
+              <div className="flex flex-col items-center">
+                <div className="w-13 h-13 rounded-full border border-rose-500/50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center text-rose-300 shadow-[0_0_20px_rgba(255,38,75,0.35)]">
+                  <Hand className="w-6 h-6 text-rose-300 animate-pulse" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* TAP TO AWAKEN directly below the Core */}
+        {state === 'disconnected' && (
+          <span className="-mt-2 sm:-mt-3 text-[11px] font-mono tracking-widest text-cyan-300/95 uppercase font-semibold">
+            Tap to Awaken
+          </span>
+        )}
       </button>
     </div>
   );

@@ -22,8 +22,8 @@ export const ControlBar: React.FC<ControlBarProps> = ({
   const isConnected = state !== 'disconnected';
 
   return (
-    <div className="w-full max-w-sm mx-auto px-6 pb-8 pt-2 z-20">
-      <div className="relative flex items-center justify-between px-6 py-3 rounded-full bg-slate-900/80 border border-slate-800/80 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)]">
+    <div className="w-full max-w-sm mx-auto px-4 sm:px-6 pb-4 sm:pb-8 pt-1.5 sm:pt-2 z-20 shrink-0">
+      <div className="relative flex items-center justify-between px-6 py-2.5 sm:py-3 rounded-full bg-slate-900/80 border border-slate-800/80 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)]">
         {/* Left: Microphone Mute/Unmute */}
         <button
           onClick={onToggleMute}
