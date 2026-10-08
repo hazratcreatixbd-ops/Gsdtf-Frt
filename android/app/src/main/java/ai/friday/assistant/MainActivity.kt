@@ -54,15 +54,24 @@ class MainActivity : AppCompatActivity() {
 
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest?) {
-                    // Automatically grant audio recording permission to FRIDAY web client
-                    val resources = request?.resources ?: return
-                    for (resource in resources) {
-                        if (resource == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
-                            request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
-                            return
+                    val req = request ?: return
+                    runOnUiThread {
+                        val resources = req.resources ?: return@runOnUiThread
+                        val wantsAudio = resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                        if (wantsAudio) {
+                            permissionHelper.requestRecordAudioPermission { granted ->
+                                runOnUiThread {
+                                    if (granted) {
+                                        req.grant(resources)
+                                    } else {
+                                        req.deny()
+                                    }
+                                }
+                            }
+                        } else {
+                            req.grant(resources)
                         }
                     }
-                    request.grant(resources)
                 }
             }
 
@@ -114,6 +123,7 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PermissionHelper.RC_AUDIO_RECORD) {
             val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            permissionHelper.onRecordAudioPermissionResult(granted)
             bridge.sendEventToWeb(
                 "PERMISSION_REQUIRED",
                 mapOf("permission" to "android.permission.RECORD_AUDIO", "granted" to granted)

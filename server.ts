@@ -2200,10 +2200,12 @@ wss.on('connection', async (clientWs: WebSocket) => {
 
   let liveSession: any = null;
   let isClosed = false;
+  const pendingMessages: string[] = [];
 
   // Cleanup helper
   const cleanup = () => {
     isClosed = true;
+    pendingMessages.length = 0;
     if (liveSession) {
       try {
         liveSession.close();
@@ -2213,6 +2215,73 @@ wss.on('connection', async (clientWs: WebSocket) => {
       liveSession = null;
     }
   };
+
+  const processClientMessage = (rawData: string) => {
+    if (isClosed || !liveSession) return;
+    try {
+      const msg = JSON.parse(rawData);
+
+      if (msg.type === 'audio' && msg.data) {
+        liveSession.sendRealtimeInput({
+          audio: {
+            data: msg.data,
+            mimeType: 'audio/pcm;rate=16000',
+          },
+        });
+      } else if (msg.type === 'text' && msg.text) {
+        // Send text content to Gemini Live
+        liveSession.sendClientContent({
+          turns: [
+            {
+              role: 'user',
+              parts: [{ text: String(msg.text) }],
+            },
+          ],
+          turnComplete: true,
+        });
+      } else if (msg.type === 'ping') {
+        if (clientWs.readyState === WebSocket.OPEN) {
+          clientWs.send(JSON.stringify({ type: 'pong' }));
+        }
+      } else if (msg.type === 'interrupt') {
+        console.log('Client signaled local user interrupt.');
+      } else if (msg.type === 'client_storage_sync') {
+        // Client manually modified tasks or memories
+        if (msg.memories || msg.tasks) {
+          const current = loadStorage();
+          saveStorage({
+            memories: msg.memories || current.memories,
+            tasks: msg.tasks || current.tasks,
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing client WS message:', err);
+    }
+  };
+
+  // Register WebSocket listeners immediately before awaiting ai.live.connect
+  clientWs.on('message', (rawData) => {
+    if (isClosed) return;
+    const str = rawData.toString();
+    if (!liveSession) {
+      if (pendingMessages.length < 150) {
+        pendingMessages.push(str);
+      }
+      return;
+    }
+    processClientMessage(str);
+  });
+
+  clientWs.on('close', () => {
+    console.log('Client WS disconnected.');
+    cleanup();
+  });
+
+  clientWs.on('error', (err) => {
+    console.error('Client WS socket error:', err);
+    cleanup();
+  });
 
   try {
     const dynamicPrompt = buildSystemPrompt();
@@ -3877,58 +3946,13 @@ RESOURCES & LINKS:
       },
     });
 
-    // Handle incoming client audio stream and control signals
-    clientWs.on('message', (rawData) => {
-      if (isClosed || !liveSession) return;
-      try {
-        const msg = JSON.parse(rawData.toString());
-
-        if (msg.type === 'audio' && msg.data) {
-          liveSession.sendRealtimeInput({
-            audio: {
-              data: msg.data,
-              mimeType: 'audio/pcm;rate=16000',
-            },
-          });
-        } else if (msg.type === 'text' && msg.text) {
-          // Send text content to Gemini Live
-          liveSession.sendClientContent({
-            turns: [
-              {
-                role: 'user',
-                parts: [{ text: String(msg.text) }],
-              },
-            ],
-            turnComplete: true,
-          });
-        } else if (msg.type === 'ping') {
-          clientWs.send(JSON.stringify({ type: 'pong' }));
-        } else if (msg.type === 'interrupt') {
-          console.log('Client signaled local user interrupt.');
-        } else if (msg.type === 'client_storage_sync') {
-          // Client manually modified tasks or memories
-          if (msg.memories || msg.tasks) {
-            const current = loadStorage();
-            saveStorage({
-              memories: msg.memories || current.memories,
-              tasks: msg.tasks || current.tasks,
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Error parsing client WS message:', err);
+    // Flush any messages that arrived while Gemini Live was connecting
+    while (pendingMessages.length > 0 && !isClosed && liveSession) {
+      const nextMsg = pendingMessages.shift();
+      if (nextMsg) {
+        processClientMessage(nextMsg);
       }
-    });
-
-    clientWs.on('close', () => {
-      console.log('Client WS disconnected.');
-      cleanup();
-    });
-
-    clientWs.on('error', (err) => {
-      console.error('Client WS socket error:', err);
-      cleanup();
-    });
+    }
   } catch (err: any) {
     console.error('Failed to initialize Gemini Live session:', err);
     if (clientWs.readyState === WebSocket.OPEN) {

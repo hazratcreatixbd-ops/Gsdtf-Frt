@@ -274,6 +274,7 @@ export const FridayCore: React.FC<FridayCoreProps> = ({
       <button
         onClick={onClick}
         type="button"
+        disabled={state === 'connecting'}
         aria-label={
           state === 'disconnected'
             ? 'Awaken FRIDAY'
@@ -281,7 +282,7 @@ export const FridayCore: React.FC<FridayCoreProps> = ({
             ? 'Interrupt FRIDAY'
             : 'FRIDAY listening'
         }
-        className="relative z-10 group cursor-pointer focus:outline-none transition-transform duration-300 active:scale-95 touch-manipulation flex flex-col items-center"
+        className="relative z-10 group cursor-pointer focus:outline-none transition-transform duration-300 active:scale-95 touch-manipulation flex flex-col items-center disabled:cursor-wait"
       >
         <div className="relative flex items-center justify-center">
           <canvas

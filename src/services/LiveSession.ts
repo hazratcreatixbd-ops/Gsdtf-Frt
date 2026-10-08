@@ -27,6 +27,8 @@ export class LiveSession {
   private callbacks: LiveSessionCallbacks;
   private isIntentionalClose = false;
   private pingInterval: number | null = null;
+  private connectTimeout: number | null = null;
+  private isSessionReady = false;
 
   public static getServerBaseUrl(): string {
     if (typeof window === 'undefined') return '';
@@ -69,60 +71,89 @@ export class LiveSession {
     }
   }
 
+  private clearConnectTimeout() {
+    if (this.connectTimeout) {
+      window.clearTimeout(this.connectTimeout);
+      this.connectTimeout = null;
+    }
+  }
+
   public async connect(): Promise<void> {
     if (this.state !== 'disconnected') {
       return;
     }
 
     this.isIntentionalClose = false;
+    this.isSessionReady = false;
+
+    // 1. Validate Server Endpoint FIRST before transitions or hardware initialization
+    const customBase = LiveSession.getServerBaseUrl();
+    if (!customBase && LiveSession.isBundledLocalOrigin()) {
+      // Running inside standalone Android APK without a configured remote/local backend server URL:
+      // Never attempt a fake wss://appassets.androidplatform.net/api/live socket or claim CONNECTED.
+      this.callbacks.onError?.(
+        'OFFLINE / SERVER UNAVAILABLE: Running from local Android bundle. Local tools, World, Memory, and Device Control are active. Configure FRIDAY Server URL in Settings for live cloud voice.'
+      );
+      this.disconnect();
+      return;
+    }
+
     this.setState('connecting');
 
     try {
-      // 1. Initialize AudioPlayer
+      // 2. Initialize AudioPlayer inside the active user tap gesture so mobile AudioContext is unlocked
       this.player = new AudioPlayer({
         onPlaybackStart: () => {
-          this.setState('speaking');
+          if (!this.isIntentionalClose) {
+            this.setState('speaking');
+          }
         },
         onPlaybackEnd: () => {
-          if (this.state === 'speaking') {
+          if (!this.isIntentionalClose && this.state === 'speaking') {
             this.setState('listening');
           }
         },
         onVolumeChange: (vol) => {
-          this.callbacks.onFridayVolumeChange?.(vol);
+          if (!this.isIntentionalClose) {
+            this.callbacks.onFridayVolumeChange?.(vol);
+          }
         },
       });
       await this.player.init();
 
-      // 2. Initialize AudioStreamer
+      // 3. Initialize AudioStreamer & request microphone permission immediately inside user tap gesture
       this.streamer = new AudioStreamer({
         onAudioData: (base64Pcm) => {
           this.sendAudioData(base64Pcm);
         },
         onVolumeChange: (vol) => {
-          this.callbacks.onUserVolumeChange?.(vol);
+          if (!this.isIntentionalClose) {
+            this.callbacks.onUserVolumeChange?.(vol);
+          }
         },
         onUserInterrupt: () => {
           this.handleLocalUserInterrupt();
         },
         onError: (err) => {
-          console.warn('[LiveSession] AudioStreamer notice:', err.message);
-          this.callbacks.onError?.(err.message);
+          if (!this.isIntentionalClose) {
+            console.warn('[LiveSession] AudioStreamer notice:', err.message);
+            this.callbacks.onError?.(err.message);
+          }
         },
       });
 
-      // 3. Connect WebSocket to server
-      const customBase = LiveSession.getServerBaseUrl();
-      if (!customBase && LiveSession.isBundledLocalOrigin()) {
-        // Running inside standalone Android APK without a configured remote/local backend server URL:
-        // Never attempt a fake wss://appassets.androidplatform.net/api/live socket or claim CONNECTED.
-        this.callbacks.onError?.(
-          'OFFLINE / SERVER UNAVAILABLE: Running from local Android bundle. Local tools, World, Memory, and Device Control are active. Configure FRIDAY Server URL in Settings for live cloud voice.'
-        );
-        this.disconnect();
+      // Start microphone capture while still within the mobile user tap activation context
+      try {
+        await this.streamer.start();
+      } catch (micErr: any) {
+        console.warn('[LiveSession] Initial microphone capture notice:', micErr?.message);
+      }
+
+      if (this.isIntentionalClose) {
         return;
       }
 
+      // 4. Connect WebSocket to server
       let wsUrl = '';
       if (customBase) {
         const wsBase = customBase
@@ -134,34 +165,52 @@ export class LiveSession {
         wsUrl = `${protocol}//${window.location.host}/api/live`;
       }
 
-      this.ws = new WebSocket(wsUrl);
+      const socket = new WebSocket(wsUrl);
+      this.ws = socket;
 
-      this.ws.onopen = async () => {
+      // Guard against infinite 'connecting' state if server or network hangs
+      this.clearConnectTimeout();
+      this.connectTimeout = window.setTimeout(() => {
+        if (this.ws === socket && this.state === 'connecting' && !this.isIntentionalClose) {
+          this.callbacks.onError?.(
+            'OFFLINE / SERVER UNAVAILABLE: Connection to FRIDAY voice server timed out. Tap to retry.'
+          );
+          this.disconnect();
+        }
+      }, 12000);
+
+      socket.onopen = async () => {
+        if (this.ws !== socket || this.isIntentionalClose) return;
         console.log('WebSocket connected to FRIDAY server.');
         // Start keep-alive ping
+        if (this.pingInterval) {
+          window.clearInterval(this.pingInterval);
+        }
         this.pingInterval = window.setInterval(() => {
-          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ type: 'ping' }));
+          if (this.ws === socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'ping' }));
           }
         }, 15000);
 
-        // Start microphone capture gracefully
-        try {
-          const started = await this.streamer?.start();
-          if (!started) {
-            console.warn('[LiveSession] Microphone not yet active. You can allow microphone access or type commands.');
+        // Ensure microphone streamer is capturing if it wasn't started yet
+        if (this.streamer && !this.streamer.isCapturing()) {
+          try {
+            await this.streamer.start();
+          } catch (micErr: any) {
+            console.warn('[LiveSession] Microphone capture retry notice:', micErr?.message);
           }
-        } catch (micErr: any) {
-          console.warn('[LiveSession] Microphone capture skipped:', micErr?.message);
         }
       };
 
-      this.ws.onmessage = async (event) => {
+      socket.onmessage = async (event) => {
+        if (this.ws !== socket || this.isIntentionalClose) return;
         try {
           const msg = JSON.parse(event.data);
 
           if (msg.type === 'session_ready') {
             console.log('FRIDAY Session Ready:', msg.message);
+            this.clearConnectTimeout();
+            this.isSessionReady = true;
             this.setState('listening');
             if (msg.memories && msg.tasks) {
               this.callbacks.onStorageSync?.({
@@ -188,7 +237,9 @@ export class LiveSession {
             this.player?.stopAll();
             this.setState('listening');
           } else if (msg.type === 'turn_complete') {
-            // Turn completed
+            if (this.state === 'thinking' && !this.player?.getIsPlaying()) {
+              this.setState('listening');
+            }
           } else if (msg.type === 'transcription') {
             this.callbacks.onTranscription?.({
               id: Math.random().toString(36).substring(2, 9),
@@ -198,12 +249,28 @@ export class LiveSession {
             });
           } else if (msg.type === 'tool_execution') {
             this.setState('thinking');
-            toolManager.executeTool(msg.tool, msg.args, msg.id).catch((e) => {
-              console.error('Tool execution error:', e);
-            });
+            toolManager
+              .executeTool(msg.tool, msg.args, msg.id)
+              .catch((e) => {
+                console.error('Tool execution error:', e);
+              })
+              .finally(() => {
+                if (
+                  !this.isIntentionalClose &&
+                  this.ws === socket &&
+                  this.state === 'thinking' &&
+                  !this.player?.getIsPlaying()
+                ) {
+                  this.setState('listening');
+                }
+              });
           } else if (msg.type === 'error') {
             console.error('FRIDAY Server error:', msg.message);
+            this.clearConnectTimeout();
             this.callbacks.onError?.(msg.message);
+            if (!this.isSessionReady) {
+              this.disconnect();
+            }
           } else if (msg.type === 'session_closed') {
             if (!this.isIntentionalClose) {
               this.disconnect();
@@ -214,21 +281,31 @@ export class LiveSession {
         }
       };
 
-      this.ws.onerror = (e) => {
+      socket.onerror = (e) => {
+        if (this.ws !== socket || this.isIntentionalClose) return;
         console.error('WebSocket connection error:', e);
+        this.clearConnectTimeout();
         this.callbacks.onError?.(
           'OFFLINE / SERVER UNAVAILABLE: Network connection to FRIDAY server failed.'
         );
       };
 
-      this.ws.onclose = () => {
+      socket.onclose = () => {
+        if (this.ws !== socket) return;
         console.log('WebSocket closed.');
+        this.clearConnectTimeout();
         if (!this.isIntentionalClose && this.state !== 'disconnected') {
+          if (!this.isSessionReady) {
+            this.callbacks.onError?.(
+              'OFFLINE / SERVER UNAVAILABLE: Could not establish Gemini Live voice session.'
+            );
+          }
           this.disconnect();
         }
       };
     } catch (err: any) {
       console.error('Failed to connect LiveSession:', err);
+      this.clearConnectTimeout();
       this.callbacks.onError?.(err?.message || 'Could not start FRIDAY voice session.');
       this.disconnect();
     }
@@ -250,7 +327,7 @@ export class LiveSession {
   }
 
   private sendAudioData(base64Pcm: string): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+    if (this.isSessionReady && this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(
         JSON.stringify({
           type: 'audio',
@@ -306,6 +383,8 @@ export class LiveSession {
 
   public disconnect(): void {
     this.isIntentionalClose = true;
+    this.isSessionReady = false;
+    this.clearConnectTimeout();
 
     if (this.pingInterval) {
       window.clearInterval(this.pingInterval);
@@ -323,10 +402,17 @@ export class LiveSession {
     }
 
     if (this.ws) {
-      try {
-        this.ws.close();
-      } catch (e) {}
+      const socket = this.ws;
       this.ws = null;
+      try {
+        socket.onopen = null;
+        socket.onmessage = null;
+        socket.onerror = null;
+        socket.onclose = null;
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+          socket.close();
+        }
+      } catch (e) {}
     }
 
     this.setState('disconnected');

@@ -65,15 +65,17 @@ export const WorldCore: React.FC<WorldCoreProps> = ({
           <div className="absolute inset-0 rounded-full border border-dashed border-cyan-400/45 animate-[spin_12s_linear_infinite]" />
 
           {/* Core Sphere */}
-          <div
+          <button
+            type="button"
+            disabled={state === 'connecting'}
             onClick={onCoreClick}
             style={{ transform: `scale(${audioScale})` }}
-            className={`relative flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr ${getCoreGlow()} border cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95`}
+            className={`relative flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr ${getCoreGlow()} border cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95 disabled:cursor-wait`}
             title="FRIDAY Core: Click to Start / Interrupt"
           >
             {/* Inner Neural Node */}
             <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-cyan-200 shadow-[0_0_10px_#67e8f9] animate-pulse" />
-          </div>
+          </button>
         </div>
 
         {/* Core Telemetry & Status Pill */}
@@ -108,22 +110,28 @@ export const WorldCore: React.FC<WorldCoreProps> = ({
 
       {/* Right Action: Start AI / Mic Toggle */}
       <button
+        type="button"
+        disabled={state === 'connecting'}
         onClick={() => {
           if (state === 'disconnected') {
             onCoreClick();
-          } else {
+          } else if (state !== 'connecting') {
             onToggleMute();
           }
         }}
         className={`relative z-10 flex items-center justify-center space-x-1 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-[9px] sm:text-[11px] font-extrabold tracking-wider transition-all shrink-0 active:scale-95 cursor-pointer ${
-          state === 'disconnected'
+          state === 'connecting'
+            ? 'bg-blue-500/20 border border-blue-400/40 text-blue-300 opacity-75 cursor-wait'
+            : state === 'disconnected'
             ? 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.45)]'
             : isMuted
             ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
             : 'bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30'
         }`}
       >
-        {state === 'disconnected' ? (
+        {state === 'connecting' ? (
+          <span>SYNC...</span>
+        ) : state === 'disconnected' ? (
           <span>CONNECT</span>
         ) : isMuted ? (
           <>

@@ -24,6 +24,8 @@ class PermissionHelper(private val activity: Activity) {
         )
     }
 
+    private var pendingAudioCallback: ((Boolean) -> Unit)? = null
+
     /**
      * Checks whether a specific permission is granted.
      */
@@ -43,11 +45,18 @@ class PermissionHelper(private val activity: Activity) {
             return
         }
 
+        pendingAudioCallback = onResult
         ActivityCompat.requestPermissions(
             activity,
             arrayOf(Manifest.permission.RECORD_AUDIO),
             RC_AUDIO_RECORD
         )
+    }
+
+    fun onRecordAudioPermissionResult(granted: Boolean) {
+        val cb = pendingAudioCallback
+        pendingAudioCallback = null
+        cb?.invoke(granted)
     }
 
     /**

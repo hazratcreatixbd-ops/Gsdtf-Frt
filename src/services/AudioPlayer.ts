@@ -29,8 +29,12 @@ export class AudioPlayer {
   public async init(): Promise<void> {
     if (!this.audioContext || this.audioContext.state === 'closed') {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      // Output at 24kHz for Gemini Live PCM audio
-      this.audioContext = new AudioCtx({ sampleRate: 24000 });
+      // Output at 24kHz for Gemini Live PCM audio (with fallback to device default sample rate)
+      try {
+        this.audioContext = new AudioCtx({ sampleRate: 24000 });
+      } catch {
+        this.audioContext = new AudioCtx();
+      }
 
       this.analyserNode = this.audioContext.createAnalyser();
       this.analyserNode.fftSize = 256;

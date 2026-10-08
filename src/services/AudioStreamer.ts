@@ -65,11 +65,26 @@ export class AudioStreamer {
   }
 
   public isCapturing(): boolean {
-    return this.isStreaming;
+    return (
+      this.isStreaming &&
+      !!this.mediaStream &&
+      this.mediaStream.getAudioTracks().some((t) => t.readyState === 'live')
+    );
   }
 
   public async start(): Promise<boolean> {
-    if (this.isStreaming) return true;
+    if (this.isCapturing()) {
+      if (this.audioContext && this.audioContext.state === 'suspended') {
+        try {
+          await this.audioContext.resume();
+        } catch {}
+      }
+      return true;
+    }
+
+    if (this.isStreaming) {
+      this.stop();
+    }
 
     if (!this.isSupported()) {
       const err = new Error('Microphone audio capture is not supported in this browser environment.');
@@ -79,20 +94,50 @@ export class AudioStreamer {
     }
 
     try {
-      // 1. Request microphone access with echo cancellation and noise suppression
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1,
-        },
-      });
+      // 1. If running inside the FRIDAY Native Android wrapper, ensure native RECORD_AUDIO permission is requested
+      const nativeBridge = (window as any).FridayAndroidBridge;
+      if (nativeBridge && typeof nativeBridge.requestNativePermission === 'function') {
+        try {
+          nativeBridge.requestNativePermission('android.permission.RECORD_AUDIO');
+        } catch {}
+      }
+
+      // 2. Request microphone access with echo cancellation and noise suppression (with mobile fallback)
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            channelCount: 1,
+          },
+        });
+      } catch (constraintErr: any) {
+        const isConstraintIssue =
+          constraintErr?.name === 'OverconstrainedError' ||
+          constraintErr?.name === 'TypeError' ||
+          constraintErr?.name === 'NotSupportedError';
+        if (isConstraintIssue) {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } else {
+          throw constraintErr;
+        }
+      }
       this.mediaStream = stream;
 
-      // 2. Initialize AudioContext (request 16kHz for Live API)
+      // Apply mute state to tracks immediately if already muted
+      this.mediaStream.getAudioTracks().forEach((track) => {
+        track.enabled = !this.isMuted;
+      });
+
+      // 3. Initialize AudioContext (prefer 16kHz for Live API, fallback to hardware sampleRate on mobile)
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      this.audioContext = new AudioCtx({ sampleRate: 16000 });
+      try {
+        this.audioContext = new AudioCtx({ sampleRate: 16000 });
+      } catch {
+        this.audioContext = new AudioCtx();
+      }
 
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
@@ -150,9 +195,13 @@ export class AudioStreamer {
         this.callbacks.onAudioData(base64);
       };
 
+      // Use a silent zero-gain node before destination to prevent speaker echo/feedback on mobile
+      const silentGain = this.audioContext.createGain();
+      silentGain.gain.value = 0;
+
       this.sourceNode.connect(this.processorNode);
-      // Connect to destination (required for script processor in some browsers, but muted or no output)
-      this.processorNode.connect(this.audioContext.destination);
+      this.processorNode.connect(silentGain);
+      silentGain.connect(this.audioContext.destination);
 
       this.isStreaming = true;
       return true;

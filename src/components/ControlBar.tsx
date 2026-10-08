@@ -20,24 +20,40 @@ export const ControlBar: React.FC<ControlBarProps> = ({
   onInterrupt,
 }) => {
   const isConnected = state !== 'disconnected';
+  const isConnecting = state === 'connecting';
 
   return (
     <div className="w-full max-w-sm mx-auto px-4 sm:px-6 pb-4 sm:pb-8 pt-1.5 sm:pt-2 z-20 shrink-0">
       <div className="relative flex items-center justify-between px-6 py-2.5 sm:py-3 rounded-full bg-slate-900/80 border border-slate-800/80 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)]">
-        {/* Left: Microphone Mute/Unmute */}
+        {/* Left: Microphone Start (when disconnected) or Mute/Unmute (when active) */}
         <button
-          onClick={onToggleMute}
-          disabled={!isConnected}
-          title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
-          className={`flex items-center justify-center w-11 h-11 rounded-full border transition-all duration-200 active:scale-90 touch-manipulation ${
-            !isConnected
-              ? 'border-slate-800 text-slate-700 bg-slate-950/40 cursor-not-allowed'
+          type="button"
+          onClick={() => {
+            if (state === 'disconnected') {
+              onConnect();
+            } else if (!isConnecting) {
+              onToggleMute();
+            }
+          }}
+          disabled={isConnecting}
+          title={
+            state === 'disconnected'
+              ? 'Start microphone & voice conversation'
+              : isMuted
+              ? 'Unmute microphone'
+              : 'Mute microphone'
+          }
+          className={`flex items-center justify-center w-11 h-11 rounded-full border transition-all duration-200 active:scale-90 touch-manipulation cursor-pointer ${
+            isConnecting
+              ? 'border-blue-500/40 text-blue-300 bg-blue-950/30 opacity-70 cursor-wait'
+              : !isConnected
+              ? 'border-cyan-500/40 bg-slate-900/80 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-950/40 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
               : isMuted
               ? 'border-rose-500/50 bg-rose-950/40 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.3)]'
-              : 'border-slate-700/60 bg-slate-800/60 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/40'
+              : 'border-cyan-500/50 bg-cyan-950/40 text-cyan-300 hover:border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
           }`}
         >
-          {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          {isMuted && isConnected ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
         </button>
 
         {/* Center: Main Primary Voice Control */}
@@ -57,14 +73,19 @@ export const ControlBar: React.FC<ControlBarProps> = ({
             />
 
             <button
+              type="button"
+              disabled={isConnecting}
               onClick={() => {
                 if (state === 'disconnected') {
                   onConnect();
                 } else if (state === 'speaking') {
                   onInterrupt();
-                } else {
-                  // While listening, tap to interrupt or restart turn
-                  onInterrupt();
+                } else if (state === 'listening') {
+                  if (isMuted) {
+                    onToggleMute();
+                  } else {
+                    onInterrupt();
+                  }
                 }
               }}
               aria-label={

@@ -182,6 +182,12 @@ export default function App() {
               connect();
             } else if (state === 'speaking') {
               interrupt();
+            } else if (state === 'listening') {
+              if (isMuted) {
+                toggleMute();
+              } else {
+                retryMicrophone();
+              }
             }
           }}
           onToggleMute={toggleMute}
@@ -396,6 +402,12 @@ export default function App() {
                   connect();
                 } else if (state === 'speaking') {
                   interrupt();
+                } else if (state === 'listening') {
+                  if (isMuted) {
+                    toggleMute();
+                  } else {
+                    retryMicrophone();
+                  }
                 }
               }}
             />

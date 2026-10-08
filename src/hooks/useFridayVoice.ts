@@ -36,6 +36,16 @@ export function useFridayVoice() {
   });
 
   const sessionRef = useRef<LiveSession | null>(null);
+  const isConnectingRef = useRef<boolean>(false);
+  const stateRef = useRef<FridayState>('disconnected');
+
+  const updateState = useCallback((nextState: FridayState) => {
+    stateRef.current = nextState;
+    setState(nextState);
+    if (nextState !== 'connecting') {
+      isConnectingRef.current = false;
+    }
+  }, []);
 
   // Fetch initial storage from backend on mount
   useEffect(() => {
@@ -137,27 +147,48 @@ export function useFridayVoice() {
   }, []);
 
   const connect = useCallback(async () => {
+    // Prevent duplicate session creation from repeated taps while connecting or already active
+    if (isConnectingRef.current || (sessionRef.current && stateRef.current !== 'disconnected')) {
+      if (sessionRef.current && !sessionRef.current.isMicrophoneCapturing()) {
+        const ok = await sessionRef.current.retryMicrophone();
+        if (ok) {
+          setErrorMessage(null);
+        }
+      }
+      return;
+    }
+
+    isConnectingRef.current = true;
     setErrorMessage(null);
 
     if (sessionRef.current) {
-      sessionRef.current.disconnect();
+      const oldSession = sessionRef.current;
       sessionRef.current = null;
+      oldSession.disconnect();
     }
 
+    let sessionInstance: LiveSession | null = null;
     const session = new LiveSession({
       onStateChange: (newState) => {
-        setState(newState);
+        if (sessionRef.current !== sessionInstance && newState !== 'disconnected') {
+          return;
+        }
+        updateState(newState);
       },
       onTranscription: (item) => {
+        if (sessionRef.current !== sessionInstance) return;
         setTranscriptions((prev) => [...prev.slice(-25), item]);
       },
       onUserVolumeChange: (vol) => {
+        if (sessionRef.current !== sessionInstance) return;
         setUserVolume(vol);
       },
       onFridayVolumeChange: (vol) => {
+        if (sessionRef.current !== sessionInstance) return;
         setFridayVolume(vol);
       },
       onStorageSync: (data) => {
+        if (sessionRef.current !== sessionInstance) return;
         if (data.memories) {
           setMemories(data.memories);
           try {
@@ -181,35 +212,58 @@ export function useFridayVoice() {
         }
       },
       onError: (msg) => {
-        setErrorMessage(msg);
+        if (sessionRef.current !== sessionInstance) return;
+        setErrorMessage(msg || null);
       },
     });
 
+    sessionInstance = session;
     sessionRef.current = session;
-    await session.connect();
-  }, []);
+    setIsMuted(false);
+
+    try {
+      await session.connect();
+    } finally {
+      if (sessionRef.current === session && session.getState() === 'disconnected') {
+        isConnectingRef.current = false;
+      }
+    }
+  }, [updateState]);
 
   const disconnect = useCallback(() => {
+    isConnectingRef.current = false;
     if (sessionRef.current) {
-      sessionRef.current.disconnect();
+      const active = sessionRef.current;
       sessionRef.current = null;
+      active.disconnect();
     }
-    setState('disconnected');
+    updateState('disconnected');
     setUserVolume(0);
     setFridayVolume(0);
     setIsMuted(false);
-  }, []);
+  }, [updateState]);
 
-  const toggleMute = useCallback(() => {
+  const toggleMute = useCallback(async () => {
     if (!sessionRef.current) return;
     const nextMuted = !isMuted;
     sessionRef.current.setMuted(nextMuted);
     setIsMuted(nextMuted);
+    if (!nextMuted && !sessionRef.current.isMicrophoneCapturing()) {
+      const ok = await sessionRef.current.retryMicrophone();
+      if (ok) {
+        setErrorMessage(null);
+      }
+    }
   }, [isMuted]);
 
   const interrupt = useCallback(() => {
     if (sessionRef.current) {
       sessionRef.current.handleLocalUserInterrupt();
+      if (!sessionRef.current.isMicrophoneCapturing()) {
+        sessionRef.current.retryMicrophone().then((ok) => {
+          if (ok) setErrorMessage(null);
+        });
+      }
     }
   }, []);
 
@@ -220,15 +274,16 @@ export function useFridayVoice() {
   }, []);
 
   const retryMicrophone = useCallback(async () => {
-    if (sessionRef.current) {
+    if (sessionRef.current && stateRef.current !== 'disconnected') {
       const ok = await sessionRef.current.retryMicrophone();
       if (ok) {
         setErrorMessage(null);
       }
       return ok;
     }
-    return false;
-  }, []);
+    await connect();
+    return sessionRef.current?.isMicrophoneCapturing() ?? false;
+  }, [connect]);
 
   const clearError = useCallback(() => {
     setErrorMessage(null);
