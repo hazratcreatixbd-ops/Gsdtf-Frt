@@ -169,13 +169,15 @@ export class AudioPlayer {
   }
 
   /**
-   * Volume level & FFT frequency analysis for FRIDAY speech visualizer
+   * Volume level & FFT frequency analysis for FRIDAY speech visualizer.
+   * Uses setInterval (60ms) instead of requestAnimationFrame so playback timers
+   * never stall when the app enters Android background mode.
    */
   private startVolumeAnalysis() {
     if (this.volumeAnalysisTimer) return;
 
     const dataArray = new Uint8Array(64);
-    const analyze = () => {
+    this.volumeAnalysisTimer = window.setInterval(() => {
       if (this.isPlaying && this.analyserNode) {
         this.analyserNode.getByteFrequencyData(dataArray);
         let sum = 0;
@@ -188,17 +190,22 @@ export class AudioPlayer {
       } else {
         this.callbacks.onVolumeChange?.(0);
       }
-      this.volumeAnalysisTimer = window.requestAnimationFrame(analyze);
-    };
+    }, 60);
+  }
 
-    this.volumeAnalysisTimer = window.requestAnimationFrame(analyze);
+  public async resumeIfNeeded(): Promise<void> {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      try {
+        await this.audioContext.resume();
+      } catch (e) {}
+    }
   }
 
   public close(): void {
     this.stopAll();
 
     if (this.volumeAnalysisTimer) {
-      window.cancelAnimationFrame(this.volumeAnalysisTimer);
+      window.clearInterval(this.volumeAnalysisTimer);
       this.volumeAnalysisTimer = null;
     }
 

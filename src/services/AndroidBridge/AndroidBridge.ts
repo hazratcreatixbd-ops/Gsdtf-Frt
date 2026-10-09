@@ -384,6 +384,59 @@ export class AndroidBridge implements IAndroidBridge {
     );
   }
 
+  public async startForegroundService(options: {
+    statusText?: string;
+    voiceActive?: boolean;
+    muted?: boolean;
+    taskCount?: number;
+  }): Promise<AndroidActionResult> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.startForegroundService === 'function') {
+      return adapter.startForegroundService(options);
+    }
+    return {
+      success: false,
+      action: 'START_FOREGROUND_SERVICE',
+      errorCode: 'BRIDGE_UNAVAILABLE',
+      message: 'Android Foreground Service requires the FRIDAY Android APK.',
+    };
+  }
+
+  public async stopForegroundService(): Promise<AndroidActionResult> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.stopForegroundService === 'function') {
+      return adapter.stopForegroundService();
+    }
+    return {
+      success: false,
+      action: 'STOP_FOREGROUND_SERVICE',
+      errorCode: 'BRIDGE_UNAVAILABLE',
+      message: 'Android Foreground Service is not active in browser mode.',
+    };
+  }
+
+  public async getForegroundServiceStatus(): Promise<{
+    running: boolean;
+    voiceActive: boolean;
+    muted: boolean;
+    taskCount: number;
+    statusText: string;
+    ignoringBatteryOptimizations?: boolean;
+  }> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.getForegroundServiceStatus === 'function') {
+      return adapter.getForegroundServiceStatus();
+    }
+    return {
+      running: false,
+      voiceActive: false,
+      muted: false,
+      taskCount: 0,
+      statusText: 'Tab Scope (Web)',
+      ignoringBatteryOptimizations: false,
+    };
+  }
+
   public async executeSupportedAction(action: AndroidActionRequest): Promise<AndroidActionResult> {
     return this.executeWithTimeout(
       () => this.getActiveAdapter().executeSupportedAction(action),

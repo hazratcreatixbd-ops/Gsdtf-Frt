@@ -8,6 +8,9 @@
 import { AudioStreamer } from './AudioStreamer';
 import { AudioPlayer } from './AudioPlayer';
 import { toolManager } from './ToolManager';
+import { androidBridge } from './AndroidBridge/AndroidBridge';
+import { workerTaskQueue } from '../world/manager/WorkerTaskQueue';
+import { backgroundExecutionQueue } from './AndroidBridge/BackgroundExecutionQueue';
 import { FridayState, TranscriptionItem, MemoryItem, TaskItem } from '../types/friday';
 
 export interface LiveSessionCallbacks {
@@ -45,7 +48,11 @@ export class LiveSession {
   private isIntentionalClose = false;
   private pingInterval: number | null = null;
   private connectTimeout: number | null = null;
+  private reconnectTimeout: number | null = null;
+  private reconnectAttempts = 0;
+  private readonly MAX_RECONNECT_ATTEMPTS = 4;
   private isSessionReady = false;
+  private hadSuccessfulConnection = false;
   private pcmFramesSent = 0;
   private responseAudioChunksReceived = 0;
   private failedStage: string | null = null;
@@ -133,6 +140,56 @@ export class LiveSession {
     return this.state;
   }
 
+  private getActiveTaskCount(): number {
+    const activeGraphs = workerTaskQueue.getAllGraphs().filter((g) => g.status === 'RUNNING').length;
+    const bgCount = backgroundExecutionQueue.getActiveTaskCount();
+    return activeGraphs + bgCount;
+  }
+
+  public syncForegroundNotification(customStatus?: string): void {
+    if (!androidBridge.isAvailable()) return;
+    const voiceActive = this.state !== 'disconnected';
+    const taskCount = this.getActiveTaskCount();
+
+    if (!voiceActive && taskCount === 0) {
+      androidBridge.stopForegroundService().catch(() => {});
+      return;
+    }
+
+    const muted = this.isMuted();
+    let statusText = customStatus || 'FRIDAY AI Assistant is active.';
+    if (!customStatus) {
+      switch (this.state) {
+        case 'connecting':
+          statusText = 'Connecting to FRIDAY Live Voice...';
+          break;
+        case 'listening':
+          statusText = muted
+            ? 'Microphone muted • Tap notification to unmute or open FRIDAY'
+            : 'Listening in background • Speak naturally to FRIDAY';
+          break;
+        case 'thinking':
+          statusText = 'Processing your request & executing tools...';
+          break;
+        case 'speaking':
+          statusText = 'FRIDAY is speaking • Speak anytime to interrupt';
+          break;
+        case 'disconnected':
+          statusText = `Executing ${taskCount} background task(s)...`;
+          break;
+      }
+    }
+
+    androidBridge
+      .startForegroundService({
+        statusText,
+        voiceActive,
+        muted,
+        taskCount,
+      })
+      .catch(() => {});
+  }
+
   private setState(newState: FridayState) {
     if (this.state === newState) return;
     this.state = newState;
@@ -141,12 +198,21 @@ export class LiveSession {
     if (this.streamer) {
       this.streamer.setAssistantSpeaking(newState === 'speaking');
     }
+
+    this.syncForegroundNotification();
   }
 
   private clearConnectTimeout() {
     if (this.connectTimeout) {
       window.clearTimeout(this.connectTimeout);
       this.connectTimeout = null;
+    }
+  }
+
+  private clearReconnectTimeout() {
+    if (this.reconnectTimeout) {
+      window.clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
   }
 
@@ -298,7 +364,7 @@ export class LiveSession {
       socket.onopen = async () => {
         if (this.ws !== socket || this.isIntentionalClose) return;
         this.logStage('6_WEBSOCKET_OPEN', `WebSocket connected to ${wsUrl}; awaiting Gemini Live handshake`);
-        // Start keep-alive ping
+        // Start keep-alive ping & background AudioContext health check
         if (this.pingInterval) {
           window.clearInterval(this.pingInterval);
         }
@@ -306,7 +372,12 @@ export class LiveSession {
           if (this.ws === socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: 'ping' }));
           }
-        }, 15000);
+          // Ensure AudioPlayer and AudioStreamer contexts remain active in background
+          this.player?.resumeIfNeeded().catch(() => {});
+          if (this.streamer && !this.isMuted()) {
+            this.streamer.resumeIfNeeded().catch(() => {});
+          }
+        }, 10000);
 
         // Ensure microphone streamer is capturing if it wasn't started yet
         if (this.streamer && !this.streamer.isCapturing()) {
@@ -329,7 +400,11 @@ export class LiveSession {
 
           if (msg.type === 'session_ready') {
             this.clearConnectTimeout();
+            this.clearReconnectTimeout();
             this.isSessionReady = true;
+            this.hadSuccessfulConnection = true;
+            this.reconnectAttempts = 0;
+            this.callbacks.onError?.('');
             this.logStage('7_GEMINI_LIVE_READY', `${msg.message} -> Entering LISTENING state`);
             this.setState('listening');
             if (msg.memories && msg.tasks) {
@@ -398,7 +473,11 @@ export class LiveSession {
           } else if (msg.type === 'session_closed') {
             if (!this.isIntentionalClose) {
               this.logStage('7_GEMINI_LIVE_CLOSED', 'Gemini Live session closed by server');
-              this.disconnect();
+              if (this.hadSuccessfulConnection && this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
+                this.scheduleSocketReconnect(wsUrl);
+              } else {
+                this.disconnect();
+              }
             }
           }
         } catch (err) {
@@ -410,9 +489,11 @@ export class LiveSession {
         if (this.ws !== socket || this.isIntentionalClose) return;
         this.clearConnectTimeout();
         this.logStage('6_WEBSOCKET_ERROR', `WebSocket connection failed to ${wsUrl}`, true);
-        this.callbacks.onError?.(
-          `OFFLINE / SERVER UNAVAILABLE: Network connection to FRIDAY server (${wsUrl}) failed.`
-        );
+        if (!this.hadSuccessfulConnection) {
+          this.callbacks.onError?.(
+            `OFFLINE / SERVER UNAVAILABLE: Network connection to FRIDAY server (${wsUrl}) failed.`
+          );
+        }
       };
 
       socket.onclose = (ev) => {
@@ -424,6 +505,10 @@ export class LiveSession {
             `WebSocket closed unexpectedly (code=${ev.code}, ready=${this.isSessionReady})`,
             !this.isSessionReady
           );
+          if (this.hadSuccessfulConnection && this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
+            this.scheduleSocketReconnect(wsUrl);
+            return;
+          }
           if (!this.isSessionReady) {
             this.callbacks.onError?.(
               `OFFLINE / SERVER UNAVAILABLE: Could not establish Gemini Live session (${wsUrl}).`
@@ -438,6 +523,130 @@ export class LiveSession {
       this.callbacks.onError?.(err?.message || 'Could not start FRIDAY voice session.');
       this.disconnect();
     }
+  }
+
+  /**
+   * Re-establishes the WebSocket connection if dropped during app switching or transient network handoff,
+   * while preserving the existing AudioStreamer & AudioPlayer instances (zero duplicate sessions).
+   */
+  private scheduleSocketReconnect(wsUrl: string): void {
+    if (this.isIntentionalClose || this.reconnectTimeout) return;
+    this.reconnectAttempts++;
+    this.isSessionReady = false;
+    this.setState('connecting');
+    this.syncForegroundNotification(`Reconnecting voice session (attempt ${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})...`);
+
+    const delayMs = Math.min(1500 * this.reconnectAttempts, 5000);
+    this.reconnectTimeout = window.setTimeout(() => {
+      this.reconnectTimeout = null;
+      if (this.isIntentionalClose) return;
+      this.reconnectWebSocketOnly(wsUrl);
+    }, delayMs);
+  }
+
+  private reconnectWebSocketOnly(wsUrl: string): void {
+    if (this.isIntentionalClose) return;
+    if (this.ws) {
+      try {
+        this.ws.onopen = null;
+        this.ws.onmessage = null;
+        this.ws.onerror = null;
+        this.ws.onclose = null;
+        this.ws.close();
+      } catch {}
+      this.ws = null;
+    }
+
+    this.logStage('6_WEBSOCKET_RECONNECT', `Reconnecting WebSocket to ${wsUrl} (attempt ${this.reconnectAttempts})`);
+    const socket = new WebSocket(wsUrl);
+    this.ws = socket;
+
+    this.clearConnectTimeout();
+    this.connectTimeout = window.setTimeout(() => {
+      if (this.ws === socket && !this.isSessionReady && !this.isIntentionalClose) {
+        if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
+          this.scheduleSocketReconnect(wsUrl);
+        } else {
+          this.callbacks.onError?.(
+            `OFFLINE / SERVER UNAVAILABLE: Lost connection to FRIDAY voice server (${wsUrl}). Tap to retry.`
+          );
+          this.disconnect();
+        }
+      }
+    }, 10000);
+
+    socket.onopen = async () => {
+      if (this.ws !== socket || this.isIntentionalClose) return;
+      await this.player?.resumeIfNeeded();
+      if (this.streamer && !this.isMuted()) {
+        await this.streamer.resumeIfNeeded();
+      }
+    };
+
+    socket.onmessage = async (event) => {
+      if (this.ws !== socket || this.isIntentionalClose) return;
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'session_ready') {
+          this.clearConnectTimeout();
+          this.isSessionReady = true;
+          this.reconnectAttempts = 0;
+          this.callbacks.onError?.('');
+          this.logStage('7_GEMINI_LIVE_READY', 'Reconnected Gemini Live session -> LISTENING');
+          this.setState('listening');
+        } else if (msg.type === 'audio' && msg.audio) {
+          this.responseAudioChunksReceived++;
+          if (this.state === 'listening' || this.state === 'thinking') {
+            this.setState('speaking');
+          }
+          await this.player?.playChunk(msg.audio);
+        } else if (msg.type === 'interrupted') {
+          this.player?.stopAll();
+          this.setState('listening');
+        } else if (msg.type === 'turn_complete') {
+          if (this.state === 'thinking' && !this.player?.getIsPlaying()) {
+            this.setState('listening');
+          }
+        } else if (msg.type === 'transcription') {
+          this.callbacks.onTranscription?.({
+            id: Math.random().toString(36).substring(2, 9),
+            role: msg.role,
+            text: msg.text,
+            timestamp: Date.now(),
+          });
+        } else if (msg.type === 'tool_execution') {
+          this.setState('thinking');
+          toolManager
+            .executeTool(msg.tool, msg.args, msg.id)
+            .catch((e) => console.error('Tool execution error:', e))
+            .finally(() => {
+              if (!this.isIntentionalClose && this.ws === socket && this.state === 'thinking' && !this.player?.getIsPlaying()) {
+                this.setState('listening');
+              }
+            });
+        }
+      } catch (err) {
+        console.error('Error handling message on reconnected socket:', err);
+      }
+    };
+
+    socket.onerror = () => {
+      if (this.ws !== socket || this.isIntentionalClose) return;
+      this.clearConnectTimeout();
+    };
+
+    socket.onclose = () => {
+      if (this.ws !== socket || this.isIntentionalClose) return;
+      this.clearConnectTimeout();
+      if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
+        this.scheduleSocketReconnect(wsUrl);
+      } else {
+        this.callbacks.onError?.(
+          `OFFLINE / SERVER UNAVAILABLE: Connection to FRIDAY voice server (${wsUrl}) was lost. Tap to retry.`
+        );
+        this.disconnect();
+      }
+    };
   }
 
   /**
@@ -484,6 +693,7 @@ export class LiveSession {
 
   public setMuted(muted: boolean): void {
     this.streamer?.setMuted(muted);
+    this.syncForegroundNotification();
   }
 
   public isMuted(): boolean {
@@ -492,6 +702,23 @@ export class LiveSession {
 
   public isMicrophoneCapturing(): boolean {
     return this.streamer?.isCapturing() ?? false;
+  }
+
+  public async ensureActiveOnLifecycleChange(): Promise<void> {
+    if (this.isIntentionalClose || this.state === 'disconnected') return;
+    await this.player?.resumeIfNeeded();
+    if (this.streamer && !this.isMuted()) {
+      await this.streamer.resumeIfNeeded();
+    }
+    if (this.ws && (this.ws.readyState === WebSocket.CLOSED || this.ws.readyState === WebSocket.CLOSING)) {
+      const customBase = LiveSession.getServerBaseUrl();
+      const wsUrl = customBase
+        ? `${customBase.replace(/^https:/i, 'wss:').replace(/^http:/i, 'ws:')}/api/live`
+        : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/live`;
+      this.reconnectAttempts = 0;
+      this.scheduleSocketReconnect(wsUrl);
+    }
+    this.syncForegroundNotification();
   }
 
   public async retryMicrophone(): Promise<boolean> {
@@ -524,7 +751,9 @@ export class LiveSession {
   public disconnect(): void {
     this.isIntentionalClose = true;
     this.isSessionReady = false;
+    this.hadSuccessfulConnection = false;
     this.clearConnectTimeout();
+    this.clearReconnectTimeout();
 
     if (this.pingInterval) {
       window.clearInterval(this.pingInterval);

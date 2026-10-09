@@ -1,6 +1,7 @@
 package ai.friday.assistant
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.webkit.PermissionRequest
@@ -112,6 +113,66 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(appUrl)
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+        webView.resumeTimers()
+        if (::bridge.isInitialized) {
+            bridge.sendEventToWeb(
+                "APP_LIFECYCLE_CHANGED",
+                mapOf(
+                    "state" to "FOREGROUND",
+                    "foregroundServiceRunning" to FridayForegroundService.isRunning,
+                    "voiceActive" to FridayForegroundService.isVoiceActive,
+                    "taskCount" to FridayForegroundService.activeTaskCount
+                )
+            )
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Keep WebView JS timers and WebSocket/AudioContext alive when background service is active
+        if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.activeTaskCount > 0) {
+            webView.resumeTimers()
+        }
+        if (::bridge.isInitialized) {
+            bridge.sendEventToWeb(
+                "APP_LIFECYCLE_CHANGED",
+                mapOf(
+                    "state" to "PAUSED",
+                    "foregroundServiceRunning" to FridayForegroundService.isRunning,
+                    "voiceActive" to FridayForegroundService.isVoiceActive,
+                    "taskCount" to FridayForegroundService.activeTaskCount
+                )
+            )
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Prevent Chromium WebView from freezing JS timers while FRIDAY foreground service is running
+        if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.activeTaskCount > 0) {
+            webView.resumeTimers()
+        }
+        if (::bridge.isInitialized) {
+            bridge.sendEventToWeb(
+                "APP_LIFECYCLE_CHANGED",
+                mapOf(
+                    "state" to "BACKGROUND",
+                    "foregroundServiceRunning" to FridayForegroundService.isRunning,
+                    "voiceActive" to FridayForegroundService.isVoiceActive,
+                    "taskCount" to FridayForegroundService.activeTaskCount
+                )
+            )
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -132,7 +193,12 @@ class MainActivity : AppCompatActivity() {
         if (webView.canGoBack()) {
             webView.goBack()
         } else {
-            super.onBackPressed()
+            // Move task to back rather than destroying MainActivity if a voice session or task is running
+            if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.activeTaskCount > 0) {
+                moveTaskToBack(true)
+            } else {
+                super.onBackPressed()
+            }
         }
     }
 

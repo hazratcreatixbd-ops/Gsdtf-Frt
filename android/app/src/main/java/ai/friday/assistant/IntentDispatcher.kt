@@ -356,12 +356,31 @@ class IntentDispatcher(private val context: Context) {
     }
 
     /**
-     * Opens Android System Settings (e.g. Accessibility or App details).
+     * Opens Android System Settings (e.g. Accessibility, Battery Optimization, Notifications, or App details).
      */
     fun openSettings(target: String): NativeBridgeResponse {
         return try {
             val intent = when (target.lowercase()) {
                 "accessibility" -> Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                "battery", "battery_optimization", "ignore_battery_optimizations" -> {
+                    Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                }
+                "request_ignore_battery" -> {
+                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                }
+                "notifications", "notification" -> {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                    } else {
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                    }
+                }
                 "app_details" -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                     data = Uri.fromParts("package", context.packageName, null)
                 }
@@ -376,13 +395,28 @@ class IntentDispatcher(private val context: Context) {
                 message = "Opened Android $target settings screen."
             )
         } catch (e: Exception) {
-            NativeBridgeResponse(
-                requestId = "",
-                action = "OPEN_SETTINGS",
-                success = false,
-                errorCode = AndroidErrorCodes.ACTION_FAILED,
-                message = "Could not open settings: ${e.localizedMessage ?: "Unknown error"}"
-            )
+            // Fallback to application details settings if specific intent fails
+            try {
+                val fallback = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(fallback)
+                NativeBridgeResponse(
+                    requestId = "",
+                    action = "OPEN_SETTINGS",
+                    success = true,
+                    message = "Opened Android App Details settings screen."
+                )
+            } catch (ex: Exception) {
+                NativeBridgeResponse(
+                    requestId = "",
+                    action = "OPEN_SETTINGS",
+                    success = false,
+                    errorCode = AndroidErrorCodes.ACTION_FAILED,
+                    message = "Could not open settings: ${e.localizedMessage ?: "Unknown error"}"
+                )
+            }
         }
     }
 }

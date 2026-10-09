@@ -133,7 +133,7 @@ export function useFridayVoice() {
     updateTasks(updated);
   }, [tasks, updateTasks]);
 
-  // Subscribe to tool manager events & native permission events
+  // Subscribe to tool manager events, native permission events, foreground notification actions, & lifecycle events
   useEffect(() => {
     const unsubscribeTools = toolManager.subscribe((item) => {
       setRecentTool({ ...item });
@@ -163,11 +163,57 @@ export function useFridayVoice() {
       }
     });
 
+    const unsubscribeNotifActions = nativeEventBus.on('FOREGROUND_NOTIFICATION_ACTION', (event) => {
+      const payload = event.payload;
+      if (!payload || !sessionRef.current) return;
+      if (payload.action === 'TOGGLE_MUTE') {
+        const nextMuted = typeof payload.muted === 'boolean' ? payload.muted : !sessionRef.current.isMuted();
+        sessionRef.current.setMuted(nextMuted);
+        setIsMuted(nextMuted);
+      } else if (payload.action === 'STOP_VOICE') {
+        isConnectingRef.current = false;
+        const active = sessionRef.current;
+        sessionRef.current = null;
+        active.disconnect();
+        updateState('disconnected');
+        setUserVolume(0);
+        setFridayVolume(0);
+        setIsMuted(false);
+      }
+    });
+
+    const unsubscribeLifecycle = nativeEventBus.on('APP_LIFECYCLE_CHANGED', () => {
+      if (sessionRef.current && stateRef.current !== 'disconnected') {
+        sessionRef.current.ensureActiveOnLifecycleChange().catch(() => {});
+      }
+    });
+
+    const handleVisibilityOrOnline = () => {
+      if (sessionRef.current && stateRef.current !== 'disconnected') {
+        sessionRef.current.ensureActiveOnLifecycleChange().catch(() => {});
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityOrOnline);
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleVisibilityOrOnline);
+    }
+
     return () => {
       unsubscribeTools();
       unsubscribeNativePerms();
+      unsubscribeNotifActions();
+      unsubscribeLifecycle();
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityOrOnline);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleVisibilityOrOnline);
+      }
     };
-  }, []);
+  }, [updateState]);
 
   const connect = useCallback(async () => {
     // Prevent duplicate session creation from repeated taps while connecting or already active

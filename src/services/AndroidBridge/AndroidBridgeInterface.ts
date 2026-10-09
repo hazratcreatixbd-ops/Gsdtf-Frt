@@ -39,4 +39,19 @@ export interface IAndroidBridge {
   executeSupportedAction(action: AndroidActionRequest): Promise<AndroidActionResult>;
   isAppInstalled(packageName: string): Promise<boolean>;
   openSettings(target: string): Promise<AndroidActionResult>;
+  startForegroundService?(options: {
+    statusText?: string;
+    voiceActive?: boolean;
+    muted?: boolean;
+    taskCount?: number;
+  }): Promise<AndroidActionResult>;
+  stopForegroundService?(): Promise<AndroidActionResult>;
+  getForegroundServiceStatus?(): Promise<{
+    running: boolean;
+    voiceActive: boolean;
+    muted: boolean;
+    taskCount: number;
+    statusText: string;
+    ignoringBatteryOptimizations?: boolean;
+  }>;
 }

@@ -1,7 +1,9 @@
 package ai.friday.assistant
 
 import android.app.Activity
+import android.content.Context
 import android.os.Build
+import android.os.PowerManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.google.gson.Gson
@@ -29,6 +31,34 @@ class FridayAndroidBridge(
                     "serviceRunning" to enabled
                 )
             )
+        }
+        FridayForegroundService.actionListener = { action ->
+            when (action) {
+                "TOGGLE_MUTE" -> {
+                    sendEventToWeb(
+                        "FOREGROUND_NOTIFICATION_ACTION",
+                        mapOf("action" to "TOGGLE_MUTE", "muted" to FridayForegroundService.isMuted)
+                    )
+                }
+                "STOP_VOICE" -> {
+                    sendEventToWeb(
+                        "FOREGROUND_NOTIFICATION_ACTION",
+                        mapOf("action" to "STOP_VOICE")
+                    )
+                }
+                "SERVICE_STATE_CHANGED" -> {
+                    sendEventToWeb(
+                        "FOREGROUND_SERVICE_STATE_CHANGED",
+                        mapOf(
+                            "running" to FridayForegroundService.isRunning,
+                            "voiceActive" to FridayForegroundService.isVoiceActive,
+                            "muted" to FridayForegroundService.isMuted,
+                            "taskCount" to FridayForegroundService.activeTaskCount,
+                            "status" to FridayForegroundService.currentStatusText
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -161,6 +191,43 @@ class FridayAndroidBridge(
                         data = mapOf("permission" to perm, "granted" to isGranted)
                     )
                 }
+                "START_FOREGROUND_SERVICE", "UPDATE_FOREGROUND_SERVICE" -> {
+                    val statusText = request.payload?.get("statusText") as? String
+                        ?: "FRIDAY AI Assistant is active and listening."
+                    val voiceActive = request.payload?.get("voiceActive") as? Boolean ?: true
+                    val muted = request.payload?.get("muted") as? Boolean ?: false
+                    val taskCount = (request.payload?.get("taskCount") as? Number)?.toInt() ?: 0
+                    FridayForegroundService.startOrUpdateService(
+                        context = activity,
+                        statusText = statusText,
+                        voiceActive = voiceActive,
+                        muted = muted,
+                        taskCount = taskCount
+                    )
+                    activity.runOnUiThread { webView.resumeTimers() }
+                    NativeBridgeResponse(
+                        requestId = request.requestId,
+                        action = request.action,
+                        success = true,
+                        message = "Foreground service active ($statusText)",
+                        data = mapOf(
+                            "running" to true,
+                            "voiceActive" to voiceActive,
+                            "muted" to muted,
+                            "taskCount" to taskCount
+                        )
+                    )
+                }
+                "STOP_FOREGROUND_SERVICE" -> {
+                    FridayForegroundService.stopService(activity)
+                    NativeBridgeResponse(
+                        requestId = request.requestId,
+                        action = request.action,
+                        success = true,
+                        message = "Foreground service stopped.",
+                        data = mapOf("running" to false)
+                    )
+                }
                 else -> {
                     NativeBridgeResponse(
                         requestId = request.requestId,
@@ -209,6 +276,12 @@ class FridayAndroidBridge(
 
     @JavascriptInterface
     fun getDeviceInfo(): String {
+        val pm = activity.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val ignoringBatteryOpt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            pm?.isIgnoringBatteryOptimizations(activity.packageName) ?: false
+        } else {
+            true
+        }
         val info = mapOf(
             "platform" to "android",
             "isNativeWrapper" to true,
@@ -216,12 +289,19 @@ class FridayAndroidBridge(
             "apiLevel" to Build.VERSION.SDK_INT,
             "manufacturer" to Build.MANUFACTURER,
             "model" to Build.MODEL,
-            "appVersion" to "1.0.0"
+            "appVersion" to "1.0.0",
+            "ignoringBatteryOptimizations" to ignoringBatteryOpt,
+            "foregroundServiceRunning" to FridayForegroundService.isRunning
         )
         return gson.toJson(info)
     }
 
     private fun getCapabilitiesInternal(): DeviceCapabilities {
+        val hasNotifPerm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionHelper.isPermissionGranted(android.Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            true
+        }
         return DeviceCapabilities(
             androidNative = true,
             browser = true,
@@ -229,9 +309,71 @@ class FridayAndroidBridge(
             whatsapp = intentDispatcher.isPackageInstalled(IntentDispatcher.PACKAGE_WHATSAPP) ||
                     intentDispatcher.isPackageInstalled(IntentDispatcher.PACKAGE_WHATSAPP_BUSINESS),
             accessibility = FridayAccessibilityService.isServiceRunning,
-            backgroundService = FridayForegroundService.isRunning,
-            notifications = permissionHelper.isPermissionGranted(android.Manifest.permission.POST_NOTIFICATIONS)
+            backgroundService = true,
+            notifications = hasNotifPerm
         )
+    }
+
+    @JavascriptInterface
+    fun startForegroundService(
+        statusText: String,
+        voiceActive: Boolean,
+        muted: Boolean,
+        taskCount: Int
+    ): String {
+        FridayForegroundService.startOrUpdateService(
+            context = activity,
+            statusText = statusText,
+            voiceActive = voiceActive,
+            muted = muted,
+            taskCount = taskCount
+        )
+        activity.runOnUiThread { webView.resumeTimers() }
+        val res = NativeBridgeResponse(
+            requestId = "fg_${System.currentTimeMillis()}",
+            action = "START_FOREGROUND_SERVICE",
+            success = true,
+            message = "FRIDAY Foreground Service active: $statusText",
+            data = mapOf(
+                "running" to true,
+                "voiceActive" to voiceActive,
+                "muted" to muted,
+                "taskCount" to taskCount
+            )
+        )
+        return gson.toJson(res)
+    }
+
+    @JavascriptInterface
+    fun stopForegroundService(): String {
+        FridayForegroundService.stopService(activity)
+        val res = NativeBridgeResponse(
+            requestId = "fg_stop_${System.currentTimeMillis()}",
+            action = "STOP_FOREGROUND_SERVICE",
+            success = true,
+            message = "FRIDAY Foreground Service stopped.",
+            data = mapOf("running" to false)
+        )
+        return gson.toJson(res)
+    }
+
+    @JavascriptInterface
+    fun getForegroundServiceStatus(): String {
+        val pm = activity.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val ignoringBatteryOpt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            pm?.isIgnoringBatteryOptimizations(activity.packageName) ?: false
+        } else {
+            true
+        }
+        val status = mapOf(
+            "running" to FridayForegroundService.isRunning,
+            "voiceActive" to FridayForegroundService.isVoiceActive,
+            "muted" to FridayForegroundService.isMuted,
+            "taskCount" to FridayForegroundService.activeTaskCount,
+            "statusText" to FridayForegroundService.currentStatusText,
+            "ignoringBatteryOptimizations" to ignoringBatteryOpt
+        )
+        return gson.toJson(status)
     }
 
     @JavascriptInterface

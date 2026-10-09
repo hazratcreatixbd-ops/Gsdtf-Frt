@@ -16,6 +16,7 @@ import { workflowTimeline } from './WorkflowTimeline';
 import { advancedMemoryManager } from '../../services/memory/AdvancedMemoryManager';
 import { MemoryContextBuilder } from '../../services/memory/MemoryContextBuilder';
 import { businessWorkflowEngine } from '../../services/BusinessWorkflowEngine';
+import { androidBridge } from '../../services/AndroidBridge/AndroidBridge';
 import {
   TaskGraph,
   ManagerDashboardData,
@@ -90,6 +91,17 @@ export class ManagerEngine {
       this.memoryStorageFallback = serialized;
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(PERSISTENCE_KEY, serialized);
+      }
+      if (androidBridge.isAvailable()) {
+        const runningGraphs = graphs.filter((g) => g.status === 'RUNNING');
+        if (runningGraphs.length > 0) {
+          androidBridge
+            .startForegroundService({
+              statusText: `Executing workflow: ${runningGraphs[0].goal.slice(0, 48)}`,
+              taskCount: runningGraphs.length,
+            })
+            .catch(() => {});
+        }
       }
     } catch (e) {
       console.warn('[ManagerEngine] Failed to save workflow state:', e);

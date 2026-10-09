@@ -53,6 +53,17 @@ export interface AndroidDeviceInfo {
   appVersion?: string;
   batteryLevel?: number;
   isCharging?: boolean;
+  ignoringBatteryOptimizations?: boolean;
+  foregroundServiceRunning?: boolean;
+}
+
+export interface ForegroundServiceStatus {
+  running: boolean;
+  voiceActive: boolean;
+  muted: boolean;
+  taskCount: number;
+  statusText: string;
+  ignoringBatteryOptimizations?: boolean;
 }
 
 export interface AndroidCapabilities {
@@ -118,7 +129,10 @@ export interface AndroidActionRequest {
     | 'OPEN_SETTINGS'
     | 'GO_HOME'
     | 'GET_INSTALLED_APPS'
-    | 'GET_RECENT_APPS';
+    | 'GET_RECENT_APPS'
+    | 'START_FOREGROUND_SERVICE'
+    | 'UPDATE_FOREGROUND_SERVICE'
+    | 'STOP_FOREGROUND_SERVICE';
   packageName?: string;
   url?: string;
   query?: string;
@@ -128,6 +142,10 @@ export interface AndroidActionRequest {
   target?: string;
   permission?: AndroidPermission;
   timeoutMs?: number;
+  statusText?: string;
+  voiceActive?: boolean;
+  muted?: boolean;
+  taskCount?: number;
 }
 
 export interface ActionPreviewItem {
@@ -151,10 +169,14 @@ export type NativeEventType =
   | 'APP_NOT_FOUND'
   | 'PERMISSION_REQUIRED'
   | 'ACCESSIBILITY_CHANGED'
+  | 'ACCESSIBILITY_STATUS_CHANGED'
   | 'ACTION_STARTED'
   | 'ACTION_COMPLETED'
   | 'ACTION_FAILED'
-  | 'USER_CANCELLED';
+  | 'USER_CANCELLED'
+  | 'APP_LIFECYCLE_CHANGED'
+  | 'FOREGROUND_NOTIFICATION_ACTION'
+  | 'FOREGROUND_SERVICE_STATE_CHANGED';
 
 export interface NativeEvent<T = any> {
   id: string;

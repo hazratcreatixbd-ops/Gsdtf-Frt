@@ -102,15 +102,18 @@ const requiredPermissions = [
   'android.permission.POST_NOTIFICATIONS',
   'android.permission.FOREGROUND_SERVICE',
   'android.permission.FOREGROUND_SERVICE_MICROPHONE',
+  'android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK',
+  'android.permission.WAKE_LOCK',
 ];
 for (const perm of requiredPermissions) {
   check(manifest.includes(perm), `4. AndroidManifest declares permission: ${perm}`);
 }
 check(
   manifest.includes('.MainActivity') &&
+    manifest.includes('android:launchMode="singleTask"') &&
     manifest.includes('.FridayForegroundService') &&
     manifest.includes('.FridayAccessibilityService'),
-  '4b. AndroidManifest registers MainActivity, FridayForegroundService, and FridayAccessibilityService'
+  '4b. AndroidManifest registers MainActivity (singleTask), FridayForegroundService, and FridayAccessibilityService'
 );
 
 // 5. Existing Android Bridge is connected

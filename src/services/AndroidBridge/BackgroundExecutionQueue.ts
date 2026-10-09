@@ -8,12 +8,18 @@
 import { BackgroundTaskSpec, AndroidActionResult } from '../../types/android';
 import { IAndroidBridge } from './AndroidBridgeInterface';
 
+const BG_QUEUE_STORAGE_KEY = 'friday_background_execution_queue_v1';
+
 export class BackgroundExecutionQueue {
   private static instance: BackgroundExecutionQueue;
   private queue: BackgroundTaskSpec[] = [];
   private isProcessing = false;
   private bridge: IAndroidBridge | null = null;
   private listeners: Set<(queue: BackgroundTaskSpec[]) => void> = new Set();
+
+  private constructor() {
+    this.restoreFromStorage();
+  }
 
   public static getInstance(): BackgroundExecutionQueue {
     if (!BackgroundExecutionQueue.instance) {
@@ -22,8 +28,41 @@ export class BackgroundExecutionQueue {
     return BackgroundExecutionQueue.instance;
   }
 
+  private restoreFromStorage(): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const raw = localStorage.getItem(BG_QUEUE_STORAGE_KEY);
+      if (raw) {
+        const parsed: BackgroundTaskSpec[] = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          this.queue = parsed.map((t) => {
+            // If a task was mid-run when process died, re-queue it safely
+            if (t.status === 'running') {
+              return { ...t, status: 'queued' };
+            }
+            return t;
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[BackgroundExecutionQueue] Failed to restore queue:', e);
+    }
+  }
+
+  private saveToStorage(): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      localStorage.setItem(BG_QUEUE_STORAGE_KEY, JSON.stringify(this.queue.slice(-50)));
+    } catch (e) {
+      console.warn('[BackgroundExecutionQueue] Failed to persist queue:', e);
+    }
+  }
+
   public setBridge(bridge: IAndroidBridge): void {
     this.bridge = bridge;
+    if (this.getActiveTaskCount() > 0) {
+      this.processQueue();
+    }
   }
 
   public subscribe(listener: (queue: BackgroundTaskSpec[]) => void): () => void {
@@ -33,8 +72,13 @@ export class BackgroundExecutionQueue {
   }
 
   private notify(): void {
+    this.saveToStorage();
     const copy = [...this.queue];
     this.listeners.forEach((l) => l(copy));
+  }
+
+  public getActiveTaskCount(): number {
+    return this.queue.filter((t) => t.status === 'queued' || t.status === 'running').length;
   }
 
   public enqueue(
@@ -56,7 +100,7 @@ export class BackgroundExecutionQueue {
       maxRetries: options.maxRetries ?? 3,
       retryCount: 0,
       status: 'queued',
-      requiresForegroundService: options.requiresForegroundService ?? false,
+      requiresForegroundService: options.requiresForegroundService ?? true,
       createdAt: Date.now(),
     };
 
@@ -70,11 +114,7 @@ export class BackgroundExecutionQueue {
   public cancelTask(taskId: string): boolean {
     const task = this.queue.find((t) => t.id === taskId);
     if (!task) return false;
-    if (task.status === 'running') {
-      task.status = 'cancelled';
-    } else {
-      task.status = 'cancelled';
-    }
+    task.status = 'cancelled';
     this.notify();
     return true;
   }
@@ -88,7 +128,19 @@ export class BackgroundExecutionQueue {
     this.notify();
   }
 
-  private async processQueue(): Promise<void> {
+  private async syncNativeForegroundService(): Promise<void> {
+    if (!this.bridge || !this.bridge.isAvailable()) return;
+    const activeCount = this.getActiveTaskCount();
+    if (activeCount > 0 && typeof this.bridge.startForegroundService === 'function') {
+      const runningTask = this.queue.find((t) => t.status === 'running') || this.queue.find((t) => t.status === 'queued');
+      await this.bridge.startForegroundService({
+        statusText: runningTask ? `Executing task: ${runningTask.title}` : `Executing ${activeCount} background task(s)`,
+        taskCount: activeCount,
+      });
+    }
+  }
+
+  public async processQueue(): Promise<void> {
     if (this.isProcessing) return;
     this.isProcessing = true;
 
@@ -98,11 +150,16 @@ export class BackgroundExecutionQueue {
         (t) => t.status === 'queued' && (!t.scheduledTime || t.scheduledTime <= now)
       );
 
+      if (readyTasks.length > 0) {
+        await this.syncNativeForegroundService();
+      }
+
       for (const task of readyTasks) {
         if (!this.bridge) break;
 
         task.status = 'running';
         this.notify();
+        await this.syncNativeForegroundService();
 
         try {
           // Timeout execution guard (default 10s)

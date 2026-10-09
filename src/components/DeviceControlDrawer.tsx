@@ -535,9 +535,34 @@ export const DeviceControlDrawer: React.FC<DeviceControlDrawerProps> = ({ isOpen
                     <span>24/7 Background Service</span>
                   </span>
                   <span className={capabilities.backgroundExecution ? 'text-emerald-400' : 'text-slate-500'}>
-                    {capabilities.backgroundExecution ? 'Foreground Service' : 'Tab Scope (Web)'}
+                    {capabilities.backgroundExecution
+                      ? deviceInfo.foregroundServiceRunning
+                        ? 'Running (Foreground)'
+                        : 'Ready (Foreground Service)'
+                      : 'Tab Scope (Web)'}
                   </span>
                 </div>
+
+                {isAvailable && deviceInfo.ignoringBatteryOptimizations === false && (
+                  <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/40 text-[11px] font-sans text-cyan-200/90 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-cyan-300 text-xs flex items-center space-x-1.5">
+                        <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        <span>Unrestricted Battery Recommended</span>
+                      </span>
+                      <button
+                        onClick={() => androidBridge.openSettings('battery_optimization')}
+                        className="px-2.5 py-1 rounded-lg bg-cyan-500/30 hover:bg-cyan-500/50 border border-cyan-500/50 text-[10px] font-mono text-cyan-100 transition-all flex items-center space-x-1 font-semibold shrink-0"
+                      >
+                        <span>Battery Settings</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-300 leading-relaxed">
+                      To keep FRIDAY voice & tasks running reliably when switching apps or turning the screen off, set Battery usage to <strong className="text-emerald-300">Unrestricted</strong> in Android Settings.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

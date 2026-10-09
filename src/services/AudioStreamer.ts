@@ -78,6 +78,19 @@ export class AudioStreamer {
     return this.audioContext ? this.audioContext.state : 'closed';
   }
 
+  public async resumeIfNeeded(): Promise<boolean> {
+    if (this.isDisposed) return false;
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      try {
+        await this.audioContext.resume();
+      } catch {}
+    }
+    if (!this.isCapturing()) {
+      return this.start();
+    }
+    return true;
+  }
+
   public async start(): Promise<boolean> {
     if (this.isCapturing()) {
       if (this.audioContext && this.audioContext.state === 'suspended') {

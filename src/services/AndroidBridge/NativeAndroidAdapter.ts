@@ -43,6 +43,14 @@ declare global {
       executeAction?: (jsonAction: string) => string;
       postMessage?: (jsonRequest: string) => string;
       openSettings?: (target: string) => string;
+      startForegroundService?: (
+        statusText: string,
+        voiceActive: boolean,
+        muted: boolean,
+        taskCount: number
+      ) => string;
+      stopForegroundService?: () => string;
+      getForegroundServiceStatus?: () => string;
     };
     fridayReceiveNativeEvent?: (type: string, jsonPayload: string, eventId?: string) => void;
   }
@@ -121,7 +129,18 @@ export class NativeAndroidAdapter implements IAndroidBridge {
     try {
       const raw = window.FridayAndroidBridge!.getCapabilities?.();
       if (raw) {
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        return {
+          android: parsed.android ?? parsed.androidNative ?? true,
+          browser: parsed.browser ?? true,
+          youtube: parsed.youtube ?? true,
+          whatsapp: parsed.whatsapp ?? true,
+          accessibility: parsed.accessibility ?? false,
+          notifications: parsed.notifications ?? true,
+          backgroundExecution: parsed.backgroundExecution ?? parsed.backgroundService ?? true,
+          installedAppsCheck: parsed.installedAppsCheck ?? true,
+          directAppLaunch: parsed.directAppLaunch ?? true,
+        };
       }
     } catch (e) {
       console.warn('[NativeAndroidAdapter] getCapabilities parse error:', e);
@@ -134,7 +153,7 @@ export class NativeAndroidAdapter implements IAndroidBridge {
       whatsapp: true,
       accessibility: true,
       notifications: true,
-      backgroundExecution: false,
+      backgroundExecution: true,
       installedAppsCheck: true,
       directAppLaunch: true,
     };
@@ -610,6 +629,130 @@ export class NativeAndroidAdapter implements IAndroidBridge {
     }
   }
 
+  public async startForegroundService(options: {
+    statusText?: string;
+    voiceActive?: boolean;
+    muted?: boolean;
+    taskCount?: number;
+  }): Promise<AndroidActionResult> {
+    if (!this.isAvailable()) {
+      return {
+        success: false,
+        action: 'START_FOREGROUND_SERVICE',
+        errorCode: 'BRIDGE_UNAVAILABLE',
+        message: 'Native Android foreground service requires Android APK.',
+      };
+    }
+
+    const statusText = options.statusText || 'FRIDAY AI Assistant is active and listening.';
+    const voiceActive = options.voiceActive ?? true;
+    const muted = options.muted ?? false;
+    const taskCount = options.taskCount ?? 0;
+
+    try {
+      if (typeof window.FridayAndroidBridge?.startForegroundService === 'function') {
+        const raw = window.FridayAndroidBridge.startForegroundService(
+          statusText,
+          voiceActive,
+          muted,
+          taskCount
+        );
+        return raw
+          ? JSON.parse(raw)
+          : {
+              success: true,
+              action: 'START_FOREGROUND_SERVICE',
+              message: `Foreground service active: ${statusText}`,
+            };
+      }
+      return this.executeSupportedAction({
+        actionType: 'START_FOREGROUND_SERVICE',
+        statusText,
+        voiceActive,
+        muted,
+        taskCount,
+      });
+    } catch (e: any) {
+      return {
+        success: false,
+        action: 'START_FOREGROUND_SERVICE',
+        errorCode: 'NATIVE_EXCEPTION',
+        message: e?.message || 'Failed to start Android foreground service',
+      };
+    }
+  }
+
+  public async stopForegroundService(): Promise<AndroidActionResult> {
+    if (!this.isAvailable()) {
+      return {
+        success: false,
+        action: 'STOP_FOREGROUND_SERVICE',
+        errorCode: 'BRIDGE_UNAVAILABLE',
+        message: 'Native Android bridge is not available.',
+      };
+    }
+
+    try {
+      if (typeof window.FridayAndroidBridge?.stopForegroundService === 'function') {
+        const raw = window.FridayAndroidBridge.stopForegroundService();
+        return raw
+          ? JSON.parse(raw)
+          : {
+              success: true,
+              action: 'STOP_FOREGROUND_SERVICE',
+              message: 'Foreground service stopped.',
+            };
+      }
+      return this.executeSupportedAction({ actionType: 'STOP_FOREGROUND_SERVICE' });
+    } catch (e: any) {
+      return {
+        success: false,
+        action: 'STOP_FOREGROUND_SERVICE',
+        errorCode: 'NATIVE_EXCEPTION',
+        message: e?.message || 'Failed to stop Android foreground service',
+      };
+    }
+  }
+
+  public async getForegroundServiceStatus(): Promise<{
+    running: boolean;
+    voiceActive: boolean;
+    muted: boolean;
+    taskCount: number;
+    statusText: string;
+    ignoringBatteryOptimizations?: boolean;
+  }> {
+    if (!this.isAvailable()) {
+      return {
+        running: false,
+        voiceActive: false,
+        muted: false,
+        taskCount: 0,
+        statusText: 'Tab Scope (Web)',
+        ignoringBatteryOptimizations: false,
+      };
+    }
+
+    try {
+      if (typeof window.FridayAndroidBridge?.getForegroundServiceStatus === 'function') {
+        const raw = window.FridayAndroidBridge.getForegroundServiceStatus();
+        if (raw) {
+          return JSON.parse(raw);
+        }
+      }
+    } catch (e) {
+      console.warn('[NativeAndroidAdapter] getForegroundServiceStatus error:', e);
+    }
+
+    return {
+      running: false,
+      voiceActive: false,
+      muted: false,
+      taskCount: 0,
+      statusText: 'Standby',
+    };
+  }
+
   public async executeSupportedAction(action: AndroidActionRequest): Promise<AndroidActionResult> {
     if (!this.isAvailable()) {
       return {
@@ -621,7 +764,13 @@ export class NativeAndroidAdapter implements IAndroidBridge {
     }
 
     try {
-      const raw = window.FridayAndroidBridge!.executeAction?.(JSON.stringify(action));
+      const payloadReq = {
+        requestId: `req_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        action: action.actionType,
+        payload: action,
+        timestamp: Date.now(),
+      };
+      const raw = window.FridayAndroidBridge!.executeAction?.(JSON.stringify(payloadReq));
       return raw
         ? JSON.parse(raw)
         : {
