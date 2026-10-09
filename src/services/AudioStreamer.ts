@@ -25,6 +25,8 @@ export class AudioStreamer {
   private vadThreshold = 0.035; // Sensitivity threshold for speech detection
   private consecutiveSpeechFrames = 0;
   private readonly SPEECH_FRAMES_TRIGGER = 2; // Frames needed to confirm user interruption
+  private startPromise: Promise<boolean> | null = null;
+  private isDisposed = false;
 
   constructor(callbacks: AudioStreamerCallbacks) {
     this.callbacks = callbacks;
@@ -72,6 +74,10 @@ export class AudioStreamer {
     );
   }
 
+  public getAudioContextState(): string {
+    return this.audioContext ? this.audioContext.state : 'closed';
+  }
+
   public async start(): Promise<boolean> {
     if (this.isCapturing()) {
       if (this.audioContext && this.audioContext.state === 'suspended') {
@@ -82,8 +88,20 @@ export class AudioStreamer {
       return true;
     }
 
+    if (this.startPromise) {
+      return this.startPromise;
+    }
+
+    this.isDisposed = false;
+    this.startPromise = this.startInternal().finally(() => {
+      this.startPromise = null;
+    });
+    return this.startPromise;
+  }
+
+  private async startInternal(): Promise<boolean> {
     if (this.isStreaming) {
-      this.stop();
+      this.stopResourcesOnly();
     }
 
     if (!this.isSupported()) {
@@ -94,15 +112,8 @@ export class AudioStreamer {
     }
 
     try {
-      // 1. If running inside the FRIDAY Native Android wrapper, ensure native RECORD_AUDIO permission is requested
-      const nativeBridge = (window as any).FridayAndroidBridge;
-      if (nativeBridge && typeof nativeBridge.requestNativePermission === 'function') {
-        try {
-          nativeBridge.requestNativePermission('android.permission.RECORD_AUDIO');
-        } catch {}
-      }
-
-      // 2. Request microphone access with echo cancellation and noise suppression (with mobile fallback)
+      // 1. Request microphone access with echo cancellation and noise suppression (with mobile fallback).
+      // In Android WebView, getUserMedia triggers WebChromeClient.onPermissionRequest which natively requests RECORD_AUDIO.
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -124,6 +135,12 @@ export class AudioStreamer {
           throw constraintErr;
         }
       }
+
+      if (this.isDisposed) {
+        stream.getTracks().forEach((track) => track.stop());
+        return false;
+      }
+
       this.mediaStream = stream;
 
       // Apply mute state to tracks immediately if already muted
@@ -231,6 +248,11 @@ export class AudioStreamer {
   }
 
   public stop(): void {
+    this.isDisposed = true;
+    this.stopResourcesOnly();
+  }
+
+  private stopResourcesOnly(): void {
     this.isStreaming = false;
 
     if (this.processorNode) {

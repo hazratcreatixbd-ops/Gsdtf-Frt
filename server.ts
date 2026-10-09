@@ -15,10 +15,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
 app.use(express.json());
 
 const server = http.createServer(app);
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.DEFAULT_APP_PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Ensure standard user-agent and API key
@@ -3983,7 +3993,7 @@ function ensureNginxConfig() {
     const nginxConfPath = '/etc/nginx/nginx.conf';
     if (fs.existsSync(nginxConfPath)) {
       const content = fs.readFileSync(nginxConfPath, 'utf8');
-      if (!content.includes('location /api/live')) {
+      if (!content.includes('location /api/live') || !content.includes('location /api/health')) {
         const target = 'location / {';
         const addition = `location /api/live {
             proxy_pass http://localhost:3000;
@@ -3995,8 +4005,23 @@ function ensureNginxConfig() {
             proxy_send_timeout 3600s;
         }
 
+        location /api/health {
+            proxy_pass http://localhost:3000;
+            proxy_set_header Host localhost:3000;
+            add_header Access-Control-Allow-Origin *;
+        }
+
+        location /api/storage {
+            proxy_pass http://localhost:3000;
+            proxy_set_header Host localhost:3000;
+            add_header Access-Control-Allow-Origin *;
+            add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+            add_header Access-Control-Allow-Headers "Content-Type";
+        }
+
         location / {`;
-        const updated = content.replace(target, addition);
+        const cleaned = content.replace(/location \/api\/live \{[\s\S]*?\}\s*/g, '');
+        const updated = cleaned.replace(target, addition);
         fs.writeFileSync(nginxConfPath, updated, 'utf8');
         try {
           execSync('nginx -s reload', { stdio: 'ignore' });

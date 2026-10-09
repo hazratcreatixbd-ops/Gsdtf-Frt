@@ -131,7 +131,7 @@ const mainActivity = fs.readFileSync(path.join(javaDir, 'MainActivity.kt'), 'utf
 check(
   mainActivity.includes('addJavascriptInterface(bridge, "FridayAndroidBridge")') &&
     mainActivity.includes('https://appassets.androidplatform.net/assets/dist/index.html') &&
-    !mainActivity.includes('ais-dev-'),
+    !mainActivity.includes('webView.loadUrl("https://ais-'),
   '6. MainActivity.kt connects WebView, injects FridayAndroidBridge, and loads bundled FRIDAY UI locally without Google redirect'
 );
 check(

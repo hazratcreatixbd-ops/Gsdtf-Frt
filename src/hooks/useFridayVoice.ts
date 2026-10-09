@@ -3,6 +3,7 @@ import { LiveSession } from '../services/LiveSession';
 import { toolManager } from '../services/ToolManager';
 import { FridayState, ToolCallItem, TranscriptionItem, MemoryItem, TaskItem } from '../types/friday';
 import { advancedMemoryManager } from '../services/memory/AdvancedMemoryManager';
+import { nativeEventBus } from '../services/AndroidBridge/NativeEventBus';
 
 const LOCAL_STORAGE_MEMORIES_KEY = 'friday_persistent_memories';
 const LOCAL_STORAGE_TASKS_KEY = 'friday_persistent_tasks';
@@ -132,9 +133,9 @@ export function useFridayVoice() {
     updateTasks(updated);
   }, [tasks, updateTasks]);
 
-  // Subscribe to tool manager events
+  // Subscribe to tool manager events & native permission events
   useEffect(() => {
-    const unsubscribe = toolManager.subscribe((item) => {
+    const unsubscribeTools = toolManager.subscribe((item) => {
       setRecentTool({ ...item });
       if (item.status === 'completed' || item.status === 'failed') {
         const timer = setTimeout(() => {
@@ -143,7 +144,29 @@ export function useFridayVoice() {
         return () => clearTimeout(timer);
       }
     });
-    return unsubscribe;
+
+    const unsubscribeNativePerms = nativeEventBus.on('PERMISSION_REQUIRED', (event) => {
+      const payload = event.payload;
+      if (
+        payload &&
+        payload.permission === 'android.permission.RECORD_AUDIO' &&
+        payload.granted === true &&
+        sessionRef.current &&
+        stateRef.current !== 'disconnected' &&
+        !sessionRef.current.isMicrophoneCapturing()
+      ) {
+        sessionRef.current.retryMicrophone().then((ok) => {
+          if (ok) {
+            setErrorMessage(null);
+          }
+        });
+      }
+    });
+
+    return () => {
+      unsubscribeTools();
+      unsubscribeNativePerms();
+    };
   }, []);
 
   const connect = useCallback(async () => {

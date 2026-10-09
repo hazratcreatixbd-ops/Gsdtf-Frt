@@ -1,0 +1,68 @@
+{
+  "projectId": "p14_media_1791572541488",
+  "projectFolder": "/data/part14_projects/p14_media_1791572541488",
+  "query": "Authorized Studio Desk Showcase",
+  "count": 4,
+  "references": [
+    {
+      "id": "ref_1791572542207_1",
+      "projectId": "p14_media_1791572541488",
+      "title": "Authorized Studio Desk Showcase — Reference Study #1 (Architecture)",
+      "sourceUrl": "/api/part14/files/p14_media_1791572541488/ref_card_1.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791572541488/ref_card_1.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791572541488/ref_card_1.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791572541488/ref_card_1.svg",
+      "downloadedAt": 1791572542207,
+      "verified": true
+    },
+    {
+      "id": "ref_1791572542207_2",
+      "projectId": "p14_media_1791572541488",
+      "title": "Authorized Studio Desk Showcase — Reference Study #2 (Interior Design)",
+      "sourceUrl": "/api/part14/files/p14_media_1791572541488/ref_card_2.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791572541488/ref_card_2.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791572541488/ref_card_2.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791572541488/ref_card_2.svg",
+      "downloadedAt": 1791572542207,
+      "verified": true
+    },
+    {
+      "id": "ref_1791572542207_3",
+      "projectId": "p14_media_1791572541488",
+      "title": "Authorized Studio Desk Showcase — Reference Study #3 (Studio Lighting)",
+      "sourceUrl": "/api/part14/files/p14_media_1791572541488/ref_card_3.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791572541488/ref_card_3.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791572541488/ref_card_3.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791572541488/ref_card_3.svg",
+      "downloadedAt": 1791572542207,
+      "verified": true
+    },
+    {
+      "id": "ref_1791572542207_4",
+      "projectId": "p14_media_1791572541488",
+      "title": "Authorized Studio Desk Showcase — Reference Study #4 (Minimalist Furniture)",
+      "sourceUrl": "/api/part14/files/p14_media_1791572541488/ref_card_4.svg",
+      "imageUrl": "/api/part14/files/p14_media_1791572541488/ref_card_4.svg",
+      "pageUrl": "/api/part14/files/p14_media_1791572541488/ref_card_4.svg",
+      "sourceName": "FRIDAY Local Reference Archive",
+      "license": "CC0 Public Domain Dedication",
+      "width": 1200,
+      "height": 675,
+      "savedPath": "/api/part14/files/p14_media_1791572541488/ref_card_4.svg",
+      "downloadedAt": 1791572542207,
+      "verified": true
+    }
+  ]
+}

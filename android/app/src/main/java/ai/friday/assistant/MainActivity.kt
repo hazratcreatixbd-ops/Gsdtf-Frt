@@ -101,9 +101,6 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(webView)
 
-        // Request initial microphone permission if needed
-        permissionHelper.requestRecordAudioPermission {}
-
         // Load FRIDAY Web App locally first from bundled APK assets (never redirect startup to an unauthorized Google page):
         // Uses https://appassets.androidplatform.net/assets/dist/index.html mapped directly to file:///android_asset/dist/index.html
         val customUrl = intent.getStringExtra("app_url")

@@ -323,10 +323,7 @@ export default function App() {
                 title={errorMessage}
                 className="line-clamp-2 sm:line-clamp-none break-words [overflow-wrap:anywhere] leading-snug flex-1 min-w-0"
               >
-                {errorMessage.includes('OFFLINE / SERVER UNAVAILABLE:') &&
-                errorMessage.toLowerCase().includes('local android bundle')
-                  ? 'OFFLINE / SERVER UNAVAILABLE: Local tools, World & Memory active. Configure Server in Settings.'
-                  : errorMessage}
+                {errorMessage}
               </span>
             </div>
             <div className="flex items-center space-x-1 shrink-0">
@@ -355,9 +352,25 @@ export default function App() {
                 </button>
               )}
               <button
-                onClick={() => {
+                onClick={async () => {
+                  const currentError = errorMessage || '';
                   clearError();
-                  connect();
+                  if (
+                    state !== 'disconnected' &&
+                    currentError.toLowerCase().includes('mic') &&
+                    !currentError.includes('OFFLINE')
+                  ) {
+                    const ok = await retryMicrophone();
+                    if (!ok) {
+                      disconnect();
+                      connect();
+                    }
+                  } else {
+                    if (state !== 'disconnected') {
+                      disconnect();
+                    }
+                    connect();
+                  }
                 }}
                 className="p-1 rounded-lg hover:bg-rose-900/50 text-rose-300 cursor-pointer"
                 title="Retry Connection"
@@ -513,6 +526,7 @@ export default function App() {
         onDisconnect={disconnect}
         onToggleMute={toggleMute}
         onInterrupt={interrupt}
+        onRetryMicrophone={retryMicrophone}
       />
 
       {/* Specs / About Modal */}

@@ -24,7 +24,7 @@ class PermissionHelper(private val activity: Activity) {
         )
     }
 
-    private var pendingAudioCallback: ((Boolean) -> Unit)? = null
+    private val pendingAudioCallbacks = mutableListOf<(Boolean) -> Unit>()
 
     /**
      * Checks whether a specific permission is granted.
@@ -45,18 +45,21 @@ class PermissionHelper(private val activity: Activity) {
             return
         }
 
-        pendingAudioCallback = onResult
-        ActivityCompat.requestPermissions(
-            activity,
-            arrayOf(Manifest.permission.RECORD_AUDIO),
-            RC_AUDIO_RECORD
-        )
+        val shouldRequest = pendingAudioCallbacks.isEmpty()
+        pendingAudioCallbacks.add(onResult)
+        if (shouldRequest) {
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                RC_AUDIO_RECORD
+            )
+        }
     }
 
     fun onRecordAudioPermissionResult(granted: Boolean) {
-        val cb = pendingAudioCallback
-        pendingAudioCallback = null
-        cb?.invoke(granted)
+        val callbacks = pendingAudioCallbacks.toList()
+        pendingAudioCallbacks.clear()
+        callbacks.forEach { it.invoke(granted) }
     }
 
     /**

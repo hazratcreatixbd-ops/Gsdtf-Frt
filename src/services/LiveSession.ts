@@ -19,6 +19,23 @@ export interface LiveSessionCallbacks {
   onError?: (errorMessage: string) => void;
 }
 
+export interface VoiceDiagnosticTrace {
+  micButtonTappedAt?: number;
+  permissionState: 'idle' | 'requesting' | 'granted' | 'denied' | 'error';
+  mediaStreamActive: boolean;
+  audioContextState: string;
+  liveSessionState: FridayState;
+  serverBaseUrl: string;
+  wsUrl: string;
+  wsReadyState: string;
+  geminiLiveReady: boolean;
+  pcmFramesSent: number;
+  responseAudioChunksReceived: number;
+  responsePlaybackActive: boolean;
+  failedStage: string | null;
+  failureReason: string | null;
+}
+
 export class LiveSession {
   private ws: WebSocket | null = null;
   private streamer: AudioStreamer | null = null;
@@ -29,6 +46,14 @@ export class LiveSession {
   private pingInterval: number | null = null;
   private connectTimeout: number | null = null;
   private isSessionReady = false;
+  private pcmFramesSent = 0;
+  private responseAudioChunksReceived = 0;
+  private failedStage: string | null = null;
+  private failureReason: string | null = null;
+  private permissionStatus: 'idle' | 'requesting' | 'granted' | 'denied' | 'error' = 'idle';
+
+  private static readonly DEFAULT_CLOUD_SERVER_URL =
+    'https://ais-dev-y34kxoace7g7txsixtaqn5-87869525848.asia-southeast1.run.app';
 
   public static getServerBaseUrl(): string {
     if (typeof window === 'undefined') return '';
@@ -38,9 +63,18 @@ export class LiveSession {
         return saved.replace(/\/+$/, '');
       }
     } catch {}
+    if (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+    ) {
+      return '';
+    }
     const envUrl = (import.meta as any).env?.VITE_FRIDAY_SERVER_URL?.trim();
     if (envUrl) {
       return envUrl.replace(/\/+$/, '');
+    }
+    if (LiveSession.isBundledLocalOrigin()) {
+      return LiveSession.DEFAULT_CLOUD_SERVER_URL;
     }
     return '';
   }
@@ -55,6 +89,44 @@ export class LiveSession {
 
   constructor(callbacks: LiveSessionCallbacks) {
     this.callbacks = callbacks;
+  }
+
+  public getDiagnostics(): VoiceDiagnosticTrace {
+    const wsStateMap: Record<number, string> = {
+      0: 'CONNECTING',
+      1: 'OPEN',
+      2: 'CLOSING',
+      3: 'CLOSED',
+    };
+    return {
+      permissionState: this.permissionStatus,
+      mediaStreamActive: this.streamer?.isCapturing() ?? false,
+      audioContextState: this.streamer?.getAudioContextState() ?? 'uninitialized',
+      liveSessionState: this.state,
+      serverBaseUrl: LiveSession.getServerBaseUrl() || (typeof window !== 'undefined' ? window.location.origin : ''),
+      wsUrl: this.ws?.url ?? '',
+      wsReadyState: this.ws ? wsStateMap[this.ws.readyState] || String(this.ws.readyState) : 'NONE',
+      geminiLiveReady: this.isSessionReady,
+      pcmFramesSent: this.pcmFramesSent,
+      responseAudioChunksReceived: this.responseAudioChunksReceived,
+      responsePlaybackActive: this.player?.getIsPlaying() ?? false,
+      failedStage: this.failedStage,
+      failureReason: this.failureReason,
+    };
+  }
+
+  private logStage(stage: string, detail: string, isError = false) {
+    const prefix = `[FRIDAY Voice Diagnostic][${stage}]`;
+    if (isError) {
+      this.failedStage = stage;
+      this.failureReason = detail;
+      console.error(`${prefix} FAIL: ${detail}`, this.getDiagnostics());
+    } else {
+      console.log(`${prefix} OK: ${detail}`);
+    }
+    if (typeof window !== 'undefined') {
+      (window as any).__FRIDAY_VOICE_DIAGNOSTICS__ = this.getDiagnostics();
+    }
   }
 
   public getState(): FridayState {
@@ -85,19 +157,33 @@ export class LiveSession {
 
     this.isIntentionalClose = false;
     this.isSessionReady = false;
+    this.pcmFramesSent = 0;
+    this.responseAudioChunksReceived = 0;
+    this.failedStage = null;
+    this.failureReason = null;
+    this.permissionStatus = 'requesting';
+
+    this.logStage('1_MIC_BUTTON', 'User tapped microphone / start control');
 
     // 1. Validate Server Endpoint FIRST before transitions or hardware initialization
     const customBase = LiveSession.getServerBaseUrl();
     if (!customBase && LiveSession.isBundledLocalOrigin()) {
-      // Running inside standalone Android APK without a configured remote/local backend server URL:
-      // Never attempt a fake wss://appassets.androidplatform.net/api/live socket or claim CONNECTED.
+      this.logStage(
+        '5_SERVER_URL_CONFIG',
+        'No FRIDAY cloud server URL configured for local Android bundle',
+        true
+      );
       this.callbacks.onError?.(
-        'OFFLINE / SERVER UNAVAILABLE: Running from local Android bundle. Local tools, World, Memory, and Device Control are active. Configure FRIDAY Server URL in Settings for live cloud voice.'
+        'OFFLINE / SERVER UNAVAILABLE: FRIDAY voice requires a live FRIDAY Cloud Server URL. Configure the Server Endpoint in Settings.'
       );
       this.disconnect();
       return;
     }
 
+    this.logStage(
+      '4_LIVESESSION_INIT',
+      `Initializing LiveSession (serverBase="${customBase || window.location.origin}")`
+    );
     this.setState('connecting');
 
     try {
@@ -105,11 +191,13 @@ export class LiveSession {
       this.player = new AudioPlayer({
         onPlaybackStart: () => {
           if (!this.isIntentionalClose) {
+            this.logStage('9_RESPONSE_PLAYBACK', '24kHz response audio playback started (SPEAKING)');
             this.setState('speaking');
           }
         },
         onPlaybackEnd: () => {
           if (!this.isIntentionalClose && this.state === 'speaking') {
+            this.logStage('9_RESPONSE_PLAYBACK', 'Response audio playback finished -> returning to LISTENING');
             this.setState('listening');
           }
         },
@@ -120,6 +208,7 @@ export class LiveSession {
         },
       });
       await this.player.init();
+      this.logStage('3_AUDIOCONTEXT_OUTPUT', '24kHz output AudioPlayer initialized');
 
       // 3. Initialize AudioStreamer & request microphone permission immediately inside user tap gesture
       this.streamer = new AudioStreamer({
@@ -136,18 +225,39 @@ export class LiveSession {
         },
         onError: (err) => {
           if (!this.isIntentionalClose) {
-            console.warn('[LiveSession] AudioStreamer notice:', err.message);
+            this.permissionStatus = /permission|denied/i.test(err.message) ? 'denied' : 'error';
+            this.logStage('2_MIC_PERMISSION_STREAM', err.message, true);
             this.callbacks.onError?.(err.message);
           }
         },
       });
 
-      // Start microphone capture while still within the mobile user tap activation context
-      try {
-        await this.streamer.start();
-      } catch (micErr: any) {
-        console.warn('[LiveSession] Initial microphone capture notice:', micErr?.message);
-      }
+      // Start microphone capture immediately inside the mobile user tap activation context,
+      // without blocking WebSocket setup while the Android permission dialog is displayed.
+      this.streamer
+        .start()
+        .then((micStarted) => {
+          if (this.isIntentionalClose) return;
+          if (micStarted) {
+            this.permissionStatus = 'granted';
+            this.logStage(
+              '2_MIC_MEDIASTREAM',
+              `Microphone MediaStream active (AudioContext=${this.streamer?.getAudioContextState()})`
+            );
+          } else {
+            this.permissionStatus = 'denied';
+            this.logStage(
+              '2_MIC_MEDIASTREAM',
+              'Microphone MediaStream did not start (permission denied or hardware unavailable)',
+              true
+            );
+          }
+        })
+        .catch((micErr: any) => {
+          if (this.isIntentionalClose) return;
+          this.permissionStatus = 'error';
+          this.logStage('2_MIC_MEDIASTREAM', micErr?.message || 'Microphone capture error', true);
+        });
 
       if (this.isIntentionalClose) {
         return;
@@ -165,6 +275,7 @@ export class LiveSession {
         wsUrl = `${protocol}//${window.location.host}/api/live`;
       }
 
+      this.logStage('6_WEBSOCKET_CONNECT', `Connecting WebSocket to ${wsUrl}`);
       const socket = new WebSocket(wsUrl);
       this.ws = socket;
 
@@ -172,8 +283,13 @@ export class LiveSession {
       this.clearConnectTimeout();
       this.connectTimeout = window.setTimeout(() => {
         if (this.ws === socket && this.state === 'connecting' && !this.isIntentionalClose) {
+          this.logStage(
+            '6_WEBSOCKET_TIMEOUT',
+            `Timed out waiting for session_ready from ${wsUrl}`,
+            true
+          );
           this.callbacks.onError?.(
-            'OFFLINE / SERVER UNAVAILABLE: Connection to FRIDAY voice server timed out. Tap to retry.'
+            `OFFLINE / SERVER UNAVAILABLE: Connection to FRIDAY voice server (${wsUrl}) timed out. Tap to retry.`
           );
           this.disconnect();
         }
@@ -181,7 +297,7 @@ export class LiveSession {
 
       socket.onopen = async () => {
         if (this.ws !== socket || this.isIntentionalClose) return;
-        console.log('WebSocket connected to FRIDAY server.');
+        this.logStage('6_WEBSOCKET_OPEN', `WebSocket connected to ${wsUrl}; awaiting Gemini Live handshake`);
         // Start keep-alive ping
         if (this.pingInterval) {
           window.clearInterval(this.pingInterval);
@@ -195,7 +311,11 @@ export class LiveSession {
         // Ensure microphone streamer is capturing if it wasn't started yet
         if (this.streamer && !this.streamer.isCapturing()) {
           try {
-            await this.streamer.start();
+            const retryOk = await this.streamer.start();
+            if (retryOk) {
+              this.permissionStatus = 'granted';
+              this.logStage('2_MIC_MEDIASTREAM', 'Microphone MediaStream started on WebSocket open');
+            }
           } catch (micErr: any) {
             console.warn('[LiveSession] Microphone capture retry notice:', micErr?.message);
           }
@@ -208,9 +328,9 @@ export class LiveSession {
           const msg = JSON.parse(event.data);
 
           if (msg.type === 'session_ready') {
-            console.log('FRIDAY Session Ready:', msg.message);
             this.clearConnectTimeout();
             this.isSessionReady = true;
+            this.logStage('7_GEMINI_LIVE_READY', `${msg.message} -> Entering LISTENING state`);
             this.setState('listening');
             if (msg.memories && msg.tasks) {
               this.callbacks.onStorageSync?.({
@@ -227,13 +347,17 @@ export class LiveSession {
             }
           } else if (msg.type === 'audio' && msg.audio) {
             // Received 24kHz PCM audio chunk from FRIDAY
+            this.responseAudioChunksReceived++;
+            if (this.responseAudioChunksReceived === 1) {
+              this.logStage('8_SERVER_RESPONSE_AUDIO', 'First 24kHz PCM audio chunk received from Gemini Live');
+            }
             if (this.state === 'listening' || this.state === 'thinking') {
               this.setState('speaking');
             }
             await this.player?.playChunk(msg.audio);
           } else if (msg.type === 'interrupted') {
             // Model interrupted by user speech
-            console.log('Interruption event received from Live API.');
+            this.logStage('9_INTERRUPTION', 'Model interrupted by user voice -> LISTENING');
             this.player?.stopAll();
             this.setState('listening');
           } else if (msg.type === 'turn_complete') {
@@ -265,14 +389,15 @@ export class LiveSession {
                 }
               });
           } else if (msg.type === 'error') {
-            console.error('FRIDAY Server error:', msg.message);
             this.clearConnectTimeout();
+            this.logStage('7_GEMINI_LIVE_ERROR', msg.message || 'Server error', true);
             this.callbacks.onError?.(msg.message);
             if (!this.isSessionReady) {
               this.disconnect();
             }
           } else if (msg.type === 'session_closed') {
             if (!this.isIntentionalClose) {
+              this.logStage('7_GEMINI_LIVE_CLOSED', 'Gemini Live session closed by server');
               this.disconnect();
             }
           }
@@ -281,31 +406,35 @@ export class LiveSession {
         }
       };
 
-      socket.onerror = (e) => {
+      socket.onerror = () => {
         if (this.ws !== socket || this.isIntentionalClose) return;
-        console.error('WebSocket connection error:', e);
         this.clearConnectTimeout();
+        this.logStage('6_WEBSOCKET_ERROR', `WebSocket connection failed to ${wsUrl}`, true);
         this.callbacks.onError?.(
-          'OFFLINE / SERVER UNAVAILABLE: Network connection to FRIDAY server failed.'
+          `OFFLINE / SERVER UNAVAILABLE: Network connection to FRIDAY server (${wsUrl}) failed.`
         );
       };
 
-      socket.onclose = () => {
+      socket.onclose = (ev) => {
         if (this.ws !== socket) return;
-        console.log('WebSocket closed.');
         this.clearConnectTimeout();
         if (!this.isIntentionalClose && this.state !== 'disconnected') {
+          this.logStage(
+            '6_WEBSOCKET_CLOSED',
+            `WebSocket closed unexpectedly (code=${ev.code}, ready=${this.isSessionReady})`,
+            !this.isSessionReady
+          );
           if (!this.isSessionReady) {
             this.callbacks.onError?.(
-              'OFFLINE / SERVER UNAVAILABLE: Could not establish Gemini Live voice session.'
+              `OFFLINE / SERVER UNAVAILABLE: Could not establish Gemini Live session (${wsUrl}).`
             );
           }
           this.disconnect();
         }
       };
     } catch (err: any) {
-      console.error('Failed to connect LiveSession:', err);
       this.clearConnectTimeout();
+      this.logStage('4_LIVESESSION_EXCEPTION', err?.message || 'Unknown connect error', true);
       this.callbacks.onError?.(err?.message || 'Could not start FRIDAY voice session.');
       this.disconnect();
     }
@@ -328,6 +457,10 @@ export class LiveSession {
 
   private sendAudioData(base64Pcm: string): void {
     if (this.isSessionReady && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.pcmFramesSent++;
+      if (this.pcmFramesSent === 1) {
+        this.logStage('8_PCM_MIC_TRANSMISSION', 'First 16kHz PCM microphone frame transmitted to server');
+      }
       this.ws.send(
         JSON.stringify({
           type: 'audio',
@@ -365,6 +498,13 @@ export class LiveSession {
     if (!this.streamer) return false;
     const ok = await this.streamer.start();
     if (ok) {
+      this.permissionStatus = 'granted';
+      this.failedStage = null;
+      this.failureReason = null;
+      this.logStage(
+        '2_MIC_MEDIASTREAM',
+        `Microphone MediaStream recovered (AudioContext=${this.streamer.getAudioContextState()})`
+      );
       this.callbacks.onError?.('');
     }
     return ok;

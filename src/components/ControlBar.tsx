@@ -9,6 +9,7 @@ interface ControlBarProps {
   onDisconnect: () => void;
   onToggleMute: () => void;
   onInterrupt: () => void;
+  onRetryMicrophone?: () => void;
 }
 
 export const ControlBar: React.FC<ControlBarProps> = ({
@@ -18,6 +19,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
   onDisconnect,
   onToggleMute,
   onInterrupt,
+  onRetryMicrophone,
 }) => {
   const isConnected = state !== 'disconnected';
   const isConnecting = state === 'connecting';
@@ -80,9 +82,11 @@ export const ControlBar: React.FC<ControlBarProps> = ({
                   onConnect();
                 } else if (state === 'speaking') {
                   onInterrupt();
-                } else if (state === 'listening') {
+                } else if (state === 'listening' || state === 'thinking') {
                   if (isMuted) {
                     onToggleMute();
+                  } else if (onRetryMicrophone) {
+                    onRetryMicrophone();
                   } else {
                     onInterrupt();
                   }
