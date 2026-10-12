@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { X, Sparkles, Languages, Zap, Globe, ShieldCheck, Server, CheckCircle2 } from 'lucide-react';
-import { LiveSession } from '../services/LiveSession';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Sparkles, Languages, Zap, Globe, ShieldCheck, Server, CheckCircle2, RefreshCw, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { LiveSession, EndpointHealthReport } from '../services/LiveSession';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,13 +10,40 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [serverUrl, setServerUrl] = useState<string>(() => LiveSession.getServerBaseUrl());
   const [savedNotice, setSavedNotice] = useState(false);
+  const [checkingHealth, setCheckingHealth] = useState(false);
+  const [testingWs, setTestingWs] = useState(false);
+  const [healthReport, setHealthReport] = useState<EndpointHealthReport | null>(null);
+
+  const runDiagnostics = useCallback(async (targetUrl?: string, fullWsTest = false) => {
+    if (fullWsTest) {
+      setTestingWs(true);
+    } else {
+      setCheckingHealth(true);
+    }
+    try {
+      const report = await LiveSession.checkServerHealth(targetUrl, fullWsTest);
+      setHealthReport(report);
+    } finally {
+      setCheckingHealth(false);
+      setTestingWs(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const current = LiveSession.getServerBaseUrl();
+      setServerUrl(current);
+      runDiagnostics(current, false);
+    }
+  }, [isOpen, runDiagnostics]);
 
   if (!isOpen) return null;
 
-  const handleSaveServerUrl = (e: React.FormEvent) => {
+  const handleSaveServerUrl = async (e: React.FormEvent) => {
     e.preventDefault();
+    const clean = LiveSession.normalizeServerUrl(serverUrl);
+    setServerUrl(clean);
     try {
-      const clean = serverUrl.trim().replace(/\/+$/, '');
       if (clean) {
         localStorage.setItem('friday_server_url', clean);
       } else {
@@ -25,6 +52,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       setSavedNotice(true);
       setTimeout(() => setSavedNotice(false), 2500);
     } catch {}
+    await runDiagnostics(clean, true);
+  };
+
+  const renderEndpointStatusBadge = () => {
+    if (checkingHealth || testingWs) {
+      return (
+        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-cyan-500/40 text-cyan-300 flex items-center space-x-1">
+          <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+          <span>{testingWs ? 'TESTING LIVE WS...' : 'CHECKING...'}</span>
+        </span>
+      );
+    }
+    if (!healthReport) {
+      return (
+        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
+          UNVERIFIED
+        </span>
+      );
+    }
+    if (healthReport.reachable && healthReport.hasGeminiKey && healthReport.wsHandshakeOk) {
+      return (
+        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/90 border border-emerald-500/50 text-emerald-300 flex items-center space-x-1">
+          <Wifi className="w-2.5 h-2.5" />
+          <span>ONLINE ({healthReport.latencyMs}ms)</span>
+        </span>
+      );
+    }
+    if (healthReport.reachable && !healthReport.hasGeminiKey) {
+      return (
+        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-950/90 border border-amber-500/50 text-amber-300 flex items-center space-x-1">
+          <AlertTriangle className="w-2.5 h-2.5" />
+          <span>MISSING API KEY</span>
+        </span>
+      );
+    }
+    return (
+      <span className="text-[10px] px-2 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-rose-300 flex items-center space-x-1">
+        <WifiOff className="w-2.5 h-2.5" />
+        <span>UNREACHABLE / OFFLINE</span>
+      </span>
+    );
   };
 
   return (
@@ -54,44 +122,85 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </div>
 
         <div className="mt-5 space-y-5">
-          {/* Android / Mobile Live Server Endpoint Configuration */}
+          {/* Android / Mobile Live Server Endpoint Configuration & Real Diagnostics */}
           <div className="p-4 rounded-2xl bg-slate-950/60 border border-cyan-500/30 space-y-2.5">
-            <div className="flex items-center justify-between text-cyan-400 text-xs font-mono font-semibold">
-              <div className="flex items-center space-x-2">
-                <Server className="w-4 h-4" />
-                <span>FRIDAY SERVER ENDPOINT (ANDROID / REMOTE)</span>
+            <div className="flex items-center justify-between text-cyan-400 text-xs font-mono font-semibold gap-2">
+              <div className="flex items-center space-x-2 min-w-0">
+                <Server className="w-4 h-4 shrink-0" />
+                <span className="truncate">FRIDAY SERVER ENDPOINT</span>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
-                {LiveSession.isBundledLocalOrigin() && !serverUrl.trim()
-                  ? 'LOCAL BUNDLE (OFFLINE)'
-                  : 'CONFIGURED'}
-              </span>
+              {renderEndpointStatusBadge()}
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              When running as a standalone Android APK, enter your deployed or LAN FRIDAY backend URL (e.g. <code className="text-cyan-300">http://192.168.1.100:3000</code> or <code className="text-cyan-300">https://your-friday-server.run.app</code>) to enable Gemini Live WebSocket voice streaming.
+              Enter your deployed Cloud Run or LAN FRIDAY backend URL (e.g. <code className="text-cyan-300">https://your-friday-server.run.app</code> or <code className="text-cyan-300">http://192.168.1.100:3000</code>). Saving automatically normalizes the URL and verifies live WebSocket reachability.
             </p>
             <form onSubmit={handleSaveServerUrl} className="flex flex-col sm:flex-row gap-2 pt-1">
               <input
                 type="text"
                 value={serverUrl}
                 onChange={(e) => setServerUrl(e.target.value)}
-                placeholder="https://your-friday-server.run.app (or leave blank on web)"
+                placeholder="https://your-friday-server.run.app"
                 className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 placeholder-slate-500 focus:border-cyan-500 outline-none"
               />
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold transition-all shrink-0 flex items-center justify-center space-x-1.5 cursor-pointer"
-              >
-                {savedNotice ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-300">Saved</span>
-                  </>
-                ) : (
-                  <span>Save Endpoint</span>
-                )}
-              </button>
+              <div className="flex gap-1.5 shrink-0">
+                <button
+                  type="submit"
+                  className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+                >
+                  {savedNotice ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-300">Saved</span>
+                    </>
+                  ) : (
+                    <span>Save & Verify</span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runDiagnostics(serverUrl, true)}
+                  disabled={checkingHealth || testingWs}
+                  className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono transition-all flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
+                  title="Test HTTP Health & Gemini Live WebSocket Handshake"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${checkingHealth || testingWs ? 'animate-spin text-cyan-400' : ''}`} />
+                  <span>Test WS</span>
+                </button>
+              </div>
             </form>
+
+            {/* Real-Time Connection Diagnostic Trace */}
+            {healthReport && (
+              <div
+                className={`mt-2 p-2.5 rounded-xl border text-[11px] font-mono space-y-1 ${
+                  healthReport.reachable && healthReport.wsHandshakeOk
+                    ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+                    : 'bg-rose-950/40 border-rose-500/40 text-rose-200'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-slate-400">Resolved WS:</span>
+                  <span className="truncate text-slate-200">{healthReport.wsUrl}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-slate-400">Endpoint Type:</span>
+                  <span>
+                    {healthReport.isPreviewEndpoint
+                      ? 'AI Studio Dev/Preview Container (Sleeps when idle)'
+                      : 'Custom / Deployed Server'}
+                  </span>
+                </div>
+                {healthReport.errorReason ? (
+                  <div className="text-rose-300 pt-0.5 break-words leading-snug">
+                    Diagnostic: {healthReport.errorReason}
+                  </div>
+                ) : (
+                  <div className="text-emerald-300 pt-0.5">
+                    Diagnostic: Backend HTTP /api/health & Gemini Live /api/live ready ({healthReport.model || 'gemini-3.8-live'}).
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Engine specifications */}

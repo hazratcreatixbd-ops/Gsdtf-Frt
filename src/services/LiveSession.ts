@@ -39,6 +39,18 @@ export interface VoiceDiagnosticTrace {
   failureReason: string | null;
 }
 
+export interface EndpointHealthReport {
+  reachable: boolean;
+  wsHandshakeOk: boolean;
+  hasGeminiKey: boolean;
+  isPreviewEndpoint: boolean;
+  httpBaseUrl: string;
+  wsUrl: string;
+  latencyMs: number;
+  model?: string;
+  errorReason?: string;
+}
+
 export class LiveSession {
   private ws: WebSocket | null = null;
   private streamer: AudioStreamer | null = null;
@@ -62,12 +74,28 @@ export class LiveSession {
   private static readonly DEFAULT_CLOUD_SERVER_URL =
     'https://ais-dev-y34kxoace7g7txsixtaqn5-87869525848.asia-southeast1.run.app';
 
+  public static normalizeServerUrl(raw: string): string {
+    let cleaned = raw.trim();
+    if (!cleaned) return '';
+    cleaned = cleaned
+      .replace(/^wss:\/\//i, 'https://')
+      .replace(/^ws:\/\//i, 'http://')
+      .replace(/\/api\/live\/?$/i, '')
+      .replace(/\/api\/health\/?$/i, '')
+      .replace(/\/+$/, '');
+    if (!/^https?:\/\//i.test(cleaned)) {
+      const isLocalIp = /^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2\d|3[0-1])\.)/i.test(cleaned);
+      cleaned = `${isLocalIp ? 'http' : 'https'}://${cleaned}`;
+    }
+    return cleaned;
+  }
+
   public static getServerBaseUrl(): string {
     if (typeof window === 'undefined') return '';
     try {
       const saved = localStorage.getItem('friday_server_url')?.trim();
       if (saved) {
-        return saved.replace(/\/+$/, '');
+        return LiveSession.normalizeServerUrl(saved);
       }
     } catch {}
     if (
@@ -78,12 +106,215 @@ export class LiveSession {
     }
     const envUrl = (import.meta as any).env?.VITE_FRIDAY_SERVER_URL?.trim();
     if (envUrl) {
-      return envUrl.replace(/\/+$/, '');
+      return LiveSession.normalizeServerUrl(envUrl);
     }
     if (LiveSession.isBundledLocalOrigin()) {
       return LiveSession.DEFAULT_CLOUD_SERVER_URL;
     }
     return '';
+  }
+
+  public static getResolvedHttpBaseUrl(overrideUrl?: string): string {
+    if (overrideUrl !== undefined && overrideUrl.trim()) {
+      return LiveSession.normalizeServerUrl(overrideUrl);
+    }
+    const base = LiveSession.getServerBaseUrl();
+    if (base) return base;
+    if (typeof window !== 'undefined' && !LiveSession.isBundledLocalOrigin()) {
+      return window.location.origin.replace(/\/+$/, '');
+    }
+    return LiveSession.DEFAULT_CLOUD_SERVER_URL;
+  }
+
+  public static getResolvedWsUrl(overrideUrl?: string): string {
+    const httpBase = LiveSession.getResolvedHttpBaseUrl(overrideUrl);
+    const wsBase = httpBase
+      .replace(/^https:/i, 'wss:')
+      .replace(/^http:/i, 'ws:');
+    return `${wsBase}/api/live`;
+  }
+
+  public static isPreviewEndpointUrl(url: string): boolean {
+    return /ais-dev-|ais-pre-/i.test(url);
+  }
+
+  public static async checkServerHealth(overrideUrl?: string, verifyWs = false): Promise<EndpointHealthReport> {
+    const httpBaseUrl = LiveSession.getResolvedHttpBaseUrl(overrideUrl);
+    const wsUrl = LiveSession.getResolvedWsUrl(overrideUrl);
+    const isPreviewEndpoint = LiveSession.isPreviewEndpointUrl(httpBaseUrl);
+    const startTime = Date.now();
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`${httpBaseUrl}/api/health`, {
+        method: 'GET',
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      window.clearTimeout(timeoutId);
+      const latencyMs = Date.now() - startTime;
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        return {
+          reachable: false,
+          wsHandshakeOk: false,
+          hasGeminiKey: false,
+          isPreviewEndpoint,
+          httpBaseUrl,
+          wsUrl,
+          latencyMs,
+          errorReason: `HTTP ${res.status} from ${httpBaseUrl}/api/health.${
+            isPreviewEndpoint
+              ? ' AI Studio preview container may be asleep or stopped.'
+              : ''
+          }`,
+        };
+      }
+
+      if (!contentType.includes('application/json')) {
+        return {
+          reachable: false,
+          wsHandshakeOk: false,
+          hasGeminiKey: false,
+          isPreviewEndpoint,
+          httpBaseUrl,
+          wsUrl,
+          latencyMs,
+          errorReason: `Endpoint returned non-JSON response (${contentType || 'HTML auth redirect'}). Ensure backend proxies /api/health and /api/live directly.`,
+        };
+      }
+
+      const data = await res.json();
+      if (data?.status !== 'ok') {
+        return {
+          reachable: false,
+          wsHandshakeOk: false,
+          hasGeminiKey: false,
+          isPreviewEndpoint,
+          httpBaseUrl,
+          wsUrl,
+          latencyMs,
+          errorReason: `Unexpected health response from ${httpBaseUrl}/api/health.`,
+        };
+      }
+
+      const hasGeminiKey = Boolean(data.hasKey);
+      if (!hasGeminiKey) {
+        return {
+          reachable: true,
+          wsHandshakeOk: false,
+          hasGeminiKey: false,
+          isPreviewEndpoint,
+          httpBaseUrl,
+          wsUrl,
+          latencyMs,
+          model: data.model,
+          errorReason: 'Backend is reachable, but GEMINI_API_KEY is not configured on the server.',
+        };
+      }
+
+      if (!verifyWs) {
+        return {
+          reachable: true,
+          wsHandshakeOk: true,
+          hasGeminiKey: true,
+          isPreviewEndpoint,
+          httpBaseUrl,
+          wsUrl,
+          latencyMs,
+          model: data.model,
+        };
+      }
+
+      // Optional full WebSocket handshake verification
+      const wsResult = await new Promise<{ ok: boolean; reason?: string }>((resolve) => {
+        let settled = false;
+        const finish = (ok: boolean, reason?: string) => {
+          if (settled) return;
+          settled = true;
+          resolve({ ok, reason });
+        };
+        try {
+          const testWs = new WebSocket(wsUrl);
+          const timer = window.setTimeout(() => {
+            try {
+              testWs.close();
+            } catch {}
+            finish(false, `WebSocket handshake to ${wsUrl} timed out after 6s.`);
+          }, 6000);
+
+          testWs.onmessage = (ev) => {
+            try {
+              const msg = JSON.parse(ev.data);
+              if (msg.type === 'session_ready') {
+                window.clearTimeout(timer);
+                try {
+                  testWs.close();
+                } catch {}
+                finish(true);
+              } else if (msg.type === 'error') {
+                window.clearTimeout(timer);
+                try {
+                  testWs.close();
+                } catch {}
+                finish(false, msg.message || 'Gemini Live handshake failed.');
+              }
+            } catch {}
+          };
+
+          testWs.onerror = () => {
+            window.clearTimeout(timer);
+            finish(false, `WebSocket connection to ${wsUrl} failed.`);
+          };
+
+          testWs.onclose = (ev) => {
+            window.clearTimeout(timer);
+            if (!settled) {
+              finish(false, `WebSocket closed before session_ready (code ${ev.code}).`);
+            }
+          };
+        } catch (err: any) {
+          finish(false, err?.message || 'Failed to open WebSocket.');
+        }
+      });
+
+      return {
+        reachable: true,
+        wsHandshakeOk: wsResult.ok,
+        hasGeminiKey: true,
+        isPreviewEndpoint,
+        httpBaseUrl,
+        wsUrl,
+        latencyMs: Date.now() - startTime,
+        model: data.model,
+        errorReason: wsResult.reason,
+      };
+    } catch (err: any) {
+      const latencyMs = Date.now() - startTime;
+      const isTimeout = err?.name === 'AbortError';
+      return {
+        reachable: false,
+        wsHandshakeOk: false,
+        hasGeminiKey: false,
+        isPreviewEndpoint,
+        httpBaseUrl,
+        wsUrl,
+        latencyMs,
+        errorReason: isTimeout
+          ? `Server health check timed out (${httpBaseUrl}/api/health).${
+              isPreviewEndpoint
+                ? ' The AI Studio preview server may be asleep or offline.'
+                : ''
+            }`
+          : `Cannot reach FRIDAY server (${httpBaseUrl}).${
+              isPreviewEndpoint
+                ? ' The AI Studio preview server may be stopped, or your device is offline.'
+                : ' Verify the server is running and reachable.'
+            }`,
+      };
+    }
   }
 
   public static isBundledLocalOrigin(): boolean {
@@ -510,9 +741,22 @@ export class LiveSession {
             return;
           }
           if (!this.isSessionReady) {
-            this.callbacks.onError?.(
-              `OFFLINE / SERVER UNAVAILABLE: Could not establish Gemini Live session (${wsUrl}).`
-            );
+            // Run an immediate health diagnostic to provide the exact root cause rather than a generic message
+            LiveSession.checkServerHealth().then((health) => {
+              if (!health.reachable) {
+                this.callbacks.onError?.(
+                  `OFFLINE / SERVER UNAVAILABLE: ${health.errorReason || `Could not reach ${health.httpBaseUrl}`}`
+                );
+              } else if (!health.hasGeminiKey) {
+                this.callbacks.onError?.(
+                  `OFFLINE / SERVER UNAVAILABLE: Backend (${health.httpBaseUrl}) is reachable, but GEMINI_API_KEY is not configured.`
+                );
+              } else {
+                this.callbacks.onError?.(
+                  `OFFLINE / SERVER UNAVAILABLE: Could not establish Gemini Live session (${wsUrl}, close code ${ev.code}).`
+                );
+              }
+            });
           }
           this.disconnect();
         }
@@ -577,6 +821,19 @@ export class LiveSession {
 
     socket.onopen = async () => {
       if (this.ws !== socket || this.isIntentionalClose) return;
+      if (this.pingInterval) {
+        window.clearInterval(this.pingInterval);
+      }
+      this.pingInterval = window.setInterval(() => {
+        if (this.ws === socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: 'ping' }));
+        }
+        this.player?.resumeIfNeeded().catch(() => {});
+        if (this.streamer && !this.isMuted()) {
+          this.streamer.resumeIfNeeded().catch(() => {});
+        }
+      }, 10000);
+
       await this.player?.resumeIfNeeded();
       if (this.streamer && !this.isMuted()) {
         await this.streamer.resumeIfNeeded();
@@ -594,6 +851,19 @@ export class LiveSession {
           this.callbacks.onError?.('');
           this.logStage('7_GEMINI_LIVE_READY', 'Reconnected Gemini Live session -> LISTENING');
           this.setState('listening');
+          if (msg.memories && msg.tasks) {
+            this.callbacks.onStorageSync?.({
+              memories: msg.memories,
+              tasks: msg.tasks,
+            });
+          }
+        } else if (msg.type === 'storage_sync') {
+          if (msg.memories && msg.tasks) {
+            this.callbacks.onStorageSync?.({
+              memories: msg.memories,
+              tasks: msg.tasks,
+            });
+          }
         } else if (msg.type === 'audio' && msg.audio) {
           this.responseAudioChunksReceived++;
           if (this.state === 'listening' || this.state === 'thinking') {
@@ -624,6 +894,14 @@ export class LiveSession {
                 this.setState('listening');
               }
             });
+        } else if (msg.type === 'error') {
+          this.clearConnectTimeout();
+          this.logStage('7_GEMINI_LIVE_ERROR', msg.message || 'Server error on reconnect', true);
+          this.callbacks.onError?.(msg.message);
+        } else if (msg.type === 'session_closed') {
+          if (!this.isIntentionalClose && this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
+            this.scheduleSocketReconnect(wsUrl);
+          }
         }
       } catch (err) {
         console.error('Error handling message on reconnected socket:', err);

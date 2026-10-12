@@ -3956,6 +3956,18 @@ RESOURCES & LINKS:
       },
     });
 
+    // Server-side WebSocket heartbeat to prevent Cloud Run / Nginx / Mobile NAT idle timeouts
+    const wsHeartbeat = setInterval(() => {
+      if (isClosed || clientWs.readyState !== WebSocket.OPEN) {
+        clearInterval(wsHeartbeat);
+        return;
+      }
+      try {
+        clientWs.ping();
+      } catch {}
+    }, 15000);
+    clientWs.on('close', () => clearInterval(wsHeartbeat));
+
     // Flush any messages that arrived while Gemini Live was connecting
     while (pendingMessages.length > 0 && !isClosed && liveSession) {
       const nextMsg = pendingMessages.shift();
@@ -3977,23 +3989,29 @@ RESOURCES & LINKS:
   }
 });
 
-// Health check endpoint
+// Health check endpoint with real Gemini Live readiness and endpoint diagnostics
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
     assistant: 'FRIDAY',
     model: 'gemini-3.8-live',
     hasKey: !!process.env.GEMINI_API_KEY,
+    wsPath: '/api/live',
+    timestamp: Date.now(),
   });
 });
 
-// Ensure Nginx proxies /api/live directly to bypass auth-bridge 302 redirects on WebSocket handshakes
+// Ensure Nginx proxies /api/live, /api/health, /api/storage, and /api/part14/ directly to bypass auth-bridge 302 redirects on mobile APK requests
 function ensureNginxConfig() {
   try {
     const nginxConfPath = '/etc/nginx/nginx.conf';
     if (fs.existsSync(nginxConfPath)) {
       const content = fs.readFileSync(nginxConfPath, 'utf8');
-      if (!content.includes('location /api/live') || !content.includes('location /api/health')) {
+      if (
+        !content.includes('location /api/live') ||
+        !content.includes('location /api/health') ||
+        !content.includes('location /api/part14/')
+      ) {
         const target = 'location / {';
         const addition = `location /api/live {
             proxy_pass http://localhost:3000;
@@ -4003,6 +4021,7 @@ function ensureNginxConfig() {
             proxy_http_version 1.1;
             proxy_read_timeout 3600s;
             proxy_send_timeout 3600s;
+            proxy_buffering off;
         }
 
         location /api/health {
@@ -4019,13 +4038,25 @@ function ensureNginxConfig() {
             add_header Access-Control-Allow-Headers "Content-Type";
         }
 
+        location /api/part14/ {
+            proxy_pass http://localhost:3000;
+            proxy_set_header Host localhost:3000;
+            add_header Access-Control-Allow-Origin *;
+            add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+            add_header Access-Control-Allow-Headers "Content-Type";
+        }
+
         location / {`;
-        const cleaned = content.replace(/location \/api\/live \{[\s\S]*?\}\s*/g, '');
+        const cleaned = content
+          .replace(/location \/api\/live \{[\s\S]*?\}\s*/g, '')
+          .replace(/location \/api\/health \{[\s\S]*?\}\s*/g, '')
+          .replace(/location \/api\/storage \{[\s\S]*?\}\s*/g, '')
+          .replace(/location \/api\/part14\/ \{[\s\S]*?\}\s*/g, '');
         const updated = cleaned.replace(target, addition);
         fs.writeFileSync(nginxConfPath, updated, 'utf8');
         try {
           execSync('nginx -s reload', { stdio: 'ignore' });
-          console.log('✨ Nginx proxy reloaded with /api/live WebSocket support.');
+          console.log('✨ Nginx proxy reloaded with /api/live, /api/health, /api/storage, and /api/part14/ support.');
         } catch (e) {
           console.warn('Notice: Nginx reload signal failed:', e);
         }
