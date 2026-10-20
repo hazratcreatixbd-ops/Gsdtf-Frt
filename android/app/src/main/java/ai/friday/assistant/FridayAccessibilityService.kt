@@ -12,6 +12,8 @@ import android.util.Base64
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -197,6 +199,7 @@ class FridayAccessibilityService : AccessibilityService() {
      * Captures a single screenshot on Android 11+ (API 30+) via AccessibilityService.takeScreenshot
      * when explicitly requested by the user.
      */
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun takeScreenshotSync(timeoutMs: Long = 2500L): Triple<String, Int, Int>? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
         val latch = CountDownLatch(1)
@@ -205,7 +208,7 @@ class FridayAccessibilityService : AccessibilityService() {
         try {
             takeScreenshot(
                 Display.DEFAULT_DISPLAY,
-                mainExecutor,
+                ContextCompat.getMainExecutor(this),
                 object : TakeScreenshotCallback {
                     override fun onSuccess(screenshotResult: ScreenshotResult) {
                         try {
@@ -493,6 +496,20 @@ class FridayAccessibilityService : AccessibilityService() {
      * PART 15 — Sensitive action confirmation check
      */
     fun isSensitiveAction(targetText: String): Boolean = isSensitiveTarget(targetText)
+
+    /**
+     * Performs safe global navigation actions: BACK, HOME, RECENTS, NOTIFICATIONS.
+     */
+    fun performNavigationAction(actionName: String): Boolean {
+        val globalAction = when (actionName.lowercase().trim()) {
+            "back", "navigate_back" -> GLOBAL_ACTION_BACK
+            "home", "go_home" -> GLOBAL_ACTION_HOME
+            "recents", "recent_apps" -> GLOBAL_ACTION_RECENTS
+            "notifications" -> GLOBAL_ACTION_NOTIFICATIONS
+            else -> return false
+        }
+        return performGlobalAction(globalAction)
+    }
 
     /**
      * PART 15 — Perform authorized screen action

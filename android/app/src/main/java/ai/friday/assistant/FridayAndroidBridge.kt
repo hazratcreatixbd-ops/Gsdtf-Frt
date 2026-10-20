@@ -661,14 +661,19 @@ class FridayAndroidBridge(
     @JavascriptInterface
     fun performScreenAction(actionJson: String): String {
         return try {
-            val map = gson.fromJson(actionJson, Map::class.java)
-            val action = (map["action"] ?: map["actionType"] ?: "CLICK_TEXT") as String
-            val target = (map["targetText"] ?: map["target"] ?: "") as String
-            val text = (map["inputText"] ?: map["text"] ?: "") as String
-            val x = (map["x"] as? Number)?.toFloat()
-            val y = (map["y"] as? Number)?.toFloat()
-            val direction = (map["direction"] as? String) ?: "down"
-            val confirmed = (map["confirmed"] as? Boolean) ?: false
+            @Suppress("UNCHECKED_CAST")
+            val map = try {
+                gson.fromJson(actionJson, Map::class.java) as? Map<String, Any>
+            } catch (_: Exception) {
+                null
+            }
+            val action = (map?.get("action") ?: map?.get("actionType") ?: "CLICK_TEXT")?.toString() ?: "CLICK_TEXT"
+            val target = (map?.get("targetText") ?: map?.get("target") ?: "")?.toString() ?: ""
+            val text = (map?.get("inputText") ?: map?.get("text") ?: "")?.toString() ?: ""
+            val x = (map?.get("x") as? Number)?.toFloat()
+            val y = (map?.get("y") as? Number)?.toFloat()
+            val direction = (map?.get("direction") as? String) ?: "down"
+            val confirmed = (map?.get("confirmed") as? Boolean) ?: false
 
             when (action.uppercase()) {
                 "CLICK_TEXT", "CLICK" -> performScreenClick(target, confirmed)
