@@ -10,10 +10,13 @@ import {
   AccessibilityStatusResult,
   AndroidPermission,
   AndroidPermissionResult,
+  AndroidPermissionsSummary,
   AndroidActionRequest,
   InstalledAppInfo,
   NativeExecutionMode,
   NativeCapabilityStatus,
+  ScreenContextSnapshot,
+  ScreenActionRequest,
 } from '../../types/android';
 
 export interface IAndroidBridge {
@@ -36,6 +39,12 @@ export interface IAndroidBridge {
   sendWhatsAppMessage(phone: string, text: string): Promise<AndroidActionResult>;
   requestAccessibilityStatus(): Promise<AccessibilityStatusResult>;
   requestNativePermission(permission: AndroidPermission): Promise<AndroidPermissionResult>;
+  getAllPermissionsStatus?(): Promise<AndroidPermissionsSummary>;
+  requestScreenCapture?(): Promise<AndroidActionResult>;
+  stopScreenCapture?(): Promise<AndroidActionResult>;
+  inspectScreen?(includeScreenshot?: boolean): Promise<AndroidActionResult<ScreenContextSnapshot>>;
+  captureScreenshot?(): Promise<AndroidActionResult<ScreenContextSnapshot>>;
+  performScreenAction?(request: ScreenActionRequest): Promise<AndroidActionResult>;
   executeSupportedAction(action: AndroidActionRequest): Promise<AndroidActionResult>;
   isAppInstalled(packageName: string): Promise<boolean>;
   openSettings(target: string): Promise<AndroidActionResult>;
@@ -49,6 +58,7 @@ export interface IAndroidBridge {
   getForegroundServiceStatus?(): Promise<{
     running: boolean;
     voiceActive: boolean;
+    mediaProjectionActive?: boolean;
     muted: boolean;
     taskCount: number;
     statusText: string;

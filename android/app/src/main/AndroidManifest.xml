@@ -11,8 +11,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <!-- Queries required for Android 11+ (API 30+) package visibility -->
     <queries>
@@ -61,7 +64,7 @@
             android:name=".FridayForegroundService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="microphone|mediaPlayback|dataSync" />
+            android:foregroundServiceType="microphone|mediaPlayback|dataSync|mediaProjection" />
 
         <!-- FRIDAY Accessibility Service -->
         <service

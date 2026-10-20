@@ -681,6 +681,9 @@ export class LiveSession {
             this.setState('thinking');
             toolManager
               .executeTool(msg.tool, msg.args, msg.id)
+              .then((res) => {
+                this.forwardClientToolResult(socket, msg.tool, msg.id, res);
+              })
               .catch((e) => {
                 console.error('Tool execution error:', e);
               })
@@ -696,7 +699,19 @@ export class LiveSession {
               });
           } else if (msg.type === 'error') {
             this.clearConnectTimeout();
+            this.clearReconnectTimeout();
             this.logStage('7_GEMINI_LIVE_ERROR', msg.message || 'Server error', true);
+            const isFatalAuth =
+              msg.errorCode === 'GEMINI_API_KEY_MISSING' ||
+              /api_key|credential|permission_denied|unauthorized|forbidden|not configured/i.test(msg.message || '');
+            if (isFatalAuth) {
+              this.hadSuccessfulConnection = false;
+              this.callbacks.onError?.(
+                `AUTHENTICATION ERROR: ${msg.message || 'GEMINI_API_KEY is missing or invalid on the FRIDAY server. Please verify your server environment settings.'}`
+              );
+              this.disconnect();
+              return;
+            }
             this.callbacks.onError?.(msg.message);
             if (!this.isSessionReady) {
               this.disconnect();
@@ -721,8 +736,13 @@ export class LiveSession {
         this.clearConnectTimeout();
         this.logStage('6_WEBSOCKET_ERROR', `WebSocket connection failed to ${wsUrl}`, true);
         if (!this.hadSuccessfulConnection) {
+          const isPreview = LiveSession.isPreviewEndpointUrl(wsUrl);
           this.callbacks.onError?.(
-            `OFFLINE / SERVER UNAVAILABLE: Network connection to FRIDAY server (${wsUrl}) failed.`
+            `OFFLINE / SERVER UNAVAILABLE: Cannot connect to FRIDAY server (${wsUrl}).${
+              isPreview
+                ? ' The AI Studio preview container may be sleeping or unreachable from this device. Please configure a deployed server URL in Settings.'
+                : ' Verify the server is running and reachable on this network.'
+            }`
           );
         }
       };
@@ -730,6 +750,12 @@ export class LiveSession {
       socket.onclose = (ev) => {
         if (this.ws !== socket) return;
         this.clearConnectTimeout();
+        if (ev.code === 1008) {
+          // Fatal policy violation (e.g. missing API key)
+          this.hadSuccessfulConnection = false;
+          this.disconnect();
+          return;
+        }
         if (!this.isIntentionalClose && this.state !== 'disconnected') {
           this.logStage(
             '6_WEBSOCKET_CLOSED',
@@ -888,6 +914,9 @@ export class LiveSession {
           this.setState('thinking');
           toolManager
             .executeTool(msg.tool, msg.args, msg.id)
+            .then((res) => {
+              this.forwardClientToolResult(socket, msg.tool, msg.id, res);
+            })
             .catch((e) => console.error('Tool execution error:', e))
             .finally(() => {
               if (!this.isIntentionalClose && this.ws === socket && this.state === 'thinking' && !this.player?.getIsPlaying()) {
@@ -896,7 +925,19 @@ export class LiveSession {
             });
         } else if (msg.type === 'error') {
           this.clearConnectTimeout();
+          this.clearReconnectTimeout();
           this.logStage('7_GEMINI_LIVE_ERROR', msg.message || 'Server error on reconnect', true);
+          const isFatalAuth =
+            msg.errorCode === 'GEMINI_API_KEY_MISSING' ||
+            /api_key|credential|permission_denied|unauthorized|forbidden|not configured/i.test(msg.message || '');
+          if (isFatalAuth) {
+            this.hadSuccessfulConnection = false;
+            this.callbacks.onError?.(
+              `AUTHENTICATION ERROR: ${msg.message || 'GEMINI_API_KEY is missing or invalid on the FRIDAY server. Please verify your server environment settings.'}`
+            );
+            this.disconnect();
+            return;
+          }
           this.callbacks.onError?.(msg.message);
         } else if (msg.type === 'session_closed') {
           if (!this.isIntentionalClose && this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
@@ -913,9 +954,14 @@ export class LiveSession {
       this.clearConnectTimeout();
     };
 
-    socket.onclose = () => {
+    socket.onclose = (ev) => {
       if (this.ws !== socket || this.isIntentionalClose) return;
       this.clearConnectTimeout();
+      if (ev.code === 1008) {
+        this.hadSuccessfulConnection = false;
+        this.disconnect();
+        return;
+      }
       if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
         this.scheduleSocketReconnect(wsUrl);
       } else {
@@ -1023,6 +1069,48 @@ export class LiveSession {
           text: text.trim(),
         })
       );
+    }
+  }
+
+  public sendImageFrame(base64Jpeg: string, mimeType = 'image/jpeg'): void {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN && base64Jpeg) {
+      const cleanBase64 = base64Jpeg.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+      this.ws.send(
+        JSON.stringify({
+          type: 'image',
+          data: cleanBase64,
+          mimeType,
+        })
+      );
+    }
+  }
+
+  private forwardClientToolResult(socket: WebSocket, toolName: string, callId: string, res: any): void {
+    if (socket.readyState !== WebSocket.OPEN || !res) return;
+    if (
+      toolName.startsWith('android_') ||
+      toolName === 'inspect_screen' ||
+      toolName === 'capture_screenshot' ||
+      toolName === 'screen_action'
+    ) {
+      try {
+        const snapshot = res?.data || res;
+        if (snapshot?.screenshotBase64) {
+          this.sendImageFrame(snapshot.screenshotBase64, 'image/jpeg');
+        }
+        // Strip raw base64 from JSON text summary so we don't bloat the text context
+        const cleanResult = JSON.parse(JSON.stringify(res, (key, value) => (key === 'screenshotBase64' ? '[attached_image_frame]' : value)));
+        socket.send(
+          JSON.stringify({
+            type: 'tool_result',
+            tool: toolName,
+            id: callId,
+            result: cleanResult,
+          })
+        );
+      } catch (e) {
+        console.warn('[LiveSession] Could not forward client tool result:', e);
+      }
     }
   }
 

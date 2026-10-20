@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 const server = http.createServer(app);
-const PORT = Number(process.env.DEFAULT_APP_PORT) || 3000;
+const PORT = Number(process.env.DEFAULT_APP_PORT) || Number(process.env.PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Ensure standard user-agent and API key
@@ -233,6 +233,24 @@ PART 6 & 6C — ANDROID BRIDGE, SECOND HOME / WORKSPACE & UNIVERSAL APP LAUNCHER
   - Never bypass Android permissions, lock screens, logins, or OTPs.
   - Launching installed apps is strictly allowed on the user's own phone. No hidden or background control of other apps.
   - Accessing system-wide background tasks requires Android Usage Access permission (PACKAGE_USAGE_STATS). Do not fabricate recent app data if unavailable.
+
+PART 15 — ANDROID PERMISSION CENTER, SCREEN VISION & AUTHORIZED SCREEN INTERACTION:
+- When the user asks about what is on their phone screen or asks you to interact with the visible screen:
+  1. "FRIDAY, what is on my screen?" / "read this page" / "describe this screen" / "what buttons are visible?":
+     -> Call 'android_inspect_screen' (or 'android_capture_screenshot' if visual inspection is needed).
+     -> Use the returned foreground app, visible text summary, interactive UI elements, and screenshot frame to answer accurately.
+  2. "FRIDAY, start screen capture" / "enable screen vision":
+     -> Call 'android_request_screen_capture' to open the Android system MediaProjection consent dialog.
+  3. "FRIDAY, stop screen capture" / "stop sharing my screen":
+     -> Call 'android_stop_screen_capture'.
+  4. "FRIDAY, tap [button]" / "scroll down" / "type [text] into the search box" / "go back":
+     -> Call 'android_screen_action' with the appropriate action ('CLICK_TEXT', 'SCROLL_FORWARD', 'SCROLL_BACKWARD', 'INPUT_TEXT', 'TAP_COORDINATES', 'SWIPE', 'GLOBAL_BACK', 'GLOBAL_HOME', 'GLOBAL_RECENTS', 'GLOBAL_NOTIFICATIONS').
+  5. "FRIDAY, check my Android permissions" / "open accessibility settings":
+     -> Call 'android_check_permissions' or 'android_open_settings'.
+- STRICT PART 15 SAFETY & HONESTY RULES:
+  - NEVER claim to see the screen unless Screen Capture or Accessibility Service actually returned screen data.
+  - If Screen Capture or Accessibility Service is not enabled, clearly tell the user which permission is missing and offer to open the Permission Center or Android Settings.
+  - Sensitive actions (sending messages, deleting items, financial/payment buttons, posting publicly, or changing security settings) require explicit user confirmation before execution.
 
 PART 7 — BUSINESS INTELLIGENCE & PLANNING ENGINE:
 - You are an expert Business Intelligence & Planning Assistant.
@@ -1009,12 +1027,87 @@ const androidGetPermissionStatusTool: FunctionDeclaration = {
 
 const androidOpenSettingsTool: FunctionDeclaration = {
   name: 'android_open_settings',
-  description: 'Opens device settings screen (e.g. "accessibility", "app_details", or "settings").',
+  description: 'Opens device settings screen (e.g. "accessibility", "notifications", "battery", "app_details", or "settings").',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      target: { type: Type.STRING, description: 'Target settings screen: "accessibility" | "app_details" | "settings"' },
+      target: { type: Type.STRING, description: 'Target settings screen: "accessibility" | "notifications" | "battery" | "app_details" | "settings"' },
     },
+  },
+};
+
+// Part 15 — Screen Vision, Permission Center & Android Screen Interaction Tools
+const androidCheckPermissionsTool: FunctionDeclaration = {
+  name: 'android_check_permissions',
+  description: 'Checks the real-time status of all Android permissions required by FRIDAY (Microphone, Screen Capture / MediaProjection, Accessibility Service, Notifications, Camera, and Battery Optimization).',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {},
+  },
+};
+
+const androidRequestScreenCaptureTool: FunctionDeclaration = {
+  name: 'android_request_screen_capture',
+  description: 'Requests Android system MediaProjection screen capture consent from the user so FRIDAY can visually inspect screen screenshots.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {},
+  },
+};
+
+const androidStopScreenCaptureTool: FunctionDeclaration = {
+  name: 'android_stop_screen_capture',
+  description: 'Immediately stops any active Android MediaProjection screen capture session.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {},
+  },
+};
+
+const androidInspectScreenTool: FunctionDeclaration = {
+  name: 'android_inspect_screen',
+  description: 'Inspects the current Android phone screen, returning the foreground app name, visible text, interactive UI elements (buttons, inputs, labels), and optionally a screenshot when authorized.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      includeScreenshot: {
+        type: Type.BOOLEAN,
+        description: 'Whether to also capture a visual screenshot (requires active Screen Capture or Android 11+ Accessibility Service).',
+      },
+    },
+  },
+};
+
+const androidCaptureScreenshotTool: FunctionDeclaration = {
+  name: 'android_capture_screenshot',
+  description: 'Captures a snapshot of the current Android screen along with the visible UI hierarchy so FRIDAY can answer questions about what is on the screen.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {},
+  },
+};
+
+const androidScreenActionTool: FunctionDeclaration = {
+  name: 'android_screen_action',
+  description: 'Performs a user-authorized interaction on the current Android screen via the FRIDAY Accessibility Service: click a button/element by visible text or ID, type text into an input field, scroll, tap coordinates, or navigate (Back, Home, Recents, Notifications).',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      action: {
+        type: Type.STRING,
+        description: 'Action type: CLICK_TEXT, CLICK_ID, TAP_COORDINATES, SWIPE, SCROLL_FORWARD, SCROLL_BACKWARD, INPUT_TEXT, GLOBAL_BACK, GLOBAL_HOME, GLOBAL_RECENTS, GLOBAL_NOTIFICATIONS',
+      },
+      targetText: { type: Type.STRING, description: 'Visible text or content description of the UI element to click or target for text input.' },
+      viewId: { type: Type.STRING, description: 'Optional Android view resource ID to target.' },
+      inputText: { type: Type.STRING, description: 'Text to enter when action is INPUT_TEXT.' },
+      direction: { type: Type.STRING, description: 'Scroll direction: DOWN, UP, LEFT, or RIGHT.' },
+      x: { type: Type.NUMBER, description: 'X coordinate on screen for TAP_COORDINATES or SWIPE.' },
+      y: { type: Type.NUMBER, description: 'Y coordinate on screen for TAP_COORDINATES or SWIPE.' },
+      endX: { type: Type.NUMBER, description: 'Ending X coordinate for SWIPE.' },
+      endY: { type: Type.NUMBER, description: 'Ending Y coordinate for SWIPE.' },
+      confirmedSensitive: { type: Type.BOOLEAN, description: 'Set to true only after the user has explicitly confirmed a sensitive action (payment, deletion, or external send).' },
+    },
+    required: ['action'],
   },
 };
 
@@ -2201,12 +2294,35 @@ const toolsConfig = [
           required: ['category', 'location'],
         },
       },
+      androidCheckPermissionsTool,
+      androidRequestScreenCaptureTool,
+      androidStopScreenCaptureTool,
+      androidInspectScreenTool,
+      androidCaptureScreenshotTool,
+      androidScreenActionTool,
     ],
   },
 ];
 
 wss.on('connection', async (clientWs: WebSocket) => {
   console.log('Client connected to FRIDAY Live session.');
+
+  if (!apiKey) {
+    console.error('Gemini Live connection rejected: GEMINI_API_KEY environment variable is not configured.');
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(
+        JSON.stringify({
+          type: 'error',
+          errorCode: 'GEMINI_API_KEY_MISSING',
+          message: 'GEMINI_API_KEY is not configured on the FRIDAY server. Please configure it in your server environment variables.',
+        })
+      );
+      try {
+        clientWs.close(1008, 'GEMINI_API_KEY_MISSING');
+      } catch {}
+    }
+    return;
+  }
 
   let liveSession: any = null;
   let isClosed = false;
@@ -2237,6 +2353,24 @@ wss.on('connection', async (clientWs: WebSocket) => {
             data: msg.data,
             mimeType: 'audio/pcm;rate=16000',
           },
+        });
+      } else if (msg.type === 'image' && msg.data) {
+        liveSession.sendRealtimeInput({
+          media: {
+            data: msg.data,
+            mimeType: msg.mimeType || 'image/jpeg',
+          },
+        });
+      } else if (msg.type === 'tool_result' && msg.tool && msg.result) {
+        const summaryText = `[Device Tool Result for ${msg.tool}]: ${JSON.stringify(msg.result).slice(0, 3500)}`;
+        liveSession.sendClientContent({
+          turns: [
+            {
+              role: 'user',
+              parts: [{ text: summaryText }],
+            },
+          ],
+          turnComplete: true,
         });
       } else if (msg.type === 'text' && msg.text) {
         // Send text content to Gemini Live
@@ -2948,6 +3082,32 @@ wss.on('connection', async (clientWs: WebSocket) => {
                   response: {
                     success: true,
                     message: 'Retrieved recently accessed applications.',
+                  },
+                });
+              } else if (
+                call.name === 'android_check_permissions' ||
+                call.name === 'android_request_screen_capture' ||
+                call.name === 'android_stop_screen_capture' ||
+                call.name === 'android_inspect_screen' ||
+                call.name === 'android_capture_screenshot' ||
+                call.name === 'android_screen_action'
+              ) {
+                clientWs.send(
+                  JSON.stringify({
+                    type: 'tool_execution',
+                    tool: call.name,
+                    id: call.id,
+                    args,
+                  })
+                );
+
+                functionResponses.push({
+                  name: call.name,
+                  id: call.id,
+                  response: {
+                    success: true,
+                    message: `Dispatched Android Screen Vision / Interaction tool "${call.name}" to the device bridge.`,
+                    args,
                   },
                 });
               } else if (

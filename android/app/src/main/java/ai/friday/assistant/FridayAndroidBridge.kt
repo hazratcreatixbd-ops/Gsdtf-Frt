@@ -10,7 +10,7 @@ import com.google.gson.Gson
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * PART 6B — FRIDAY Android JavascriptInterface
+ * PART 6B & PART 15 — FRIDAY Android JavascriptInterface
  * Secure, bidirectional Web <-> Native bridge exposed as window.FridayAndroidBridge in WebView.
  */
 class FridayAndroidBridge(
@@ -28,7 +28,8 @@ class FridayAndroidBridge(
                 "ACCESSIBILITY_STATUS_CHANGED",
                 mapOf(
                     "enabled" to enabled,
-                    "serviceRunning" to enabled
+                    "serviceRunning" to enabled,
+                    "canTakeScreenshot" to (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && enabled)
                 )
             )
         }
@@ -46,12 +47,25 @@ class FridayAndroidBridge(
                         mapOf("action" to "STOP_VOICE")
                     )
                 }
+                "SCREEN_CAPTURE_STARTED" -> {
+                    sendEventToWeb(
+                        "SCREEN_CAPTURE_STATE_CHANGED",
+                        mapOf("active" to true, "granted" to true, "mode" to "MEDIA_PROJECTION")
+                    )
+                }
+                "SCREEN_CAPTURE_STOPPED" -> {
+                    sendEventToWeb(
+                        "SCREEN_CAPTURE_STATE_CHANGED",
+                        mapOf("active" to false, "granted" to false, "mode" to "STOPPED")
+                    )
+                }
                 "SERVICE_STATE_CHANGED" -> {
                     sendEventToWeb(
                         "FOREGROUND_SERVICE_STATE_CHANGED",
                         mapOf(
                             "running" to FridayForegroundService.isRunning,
                             "voiceActive" to FridayForegroundService.isVoiceActive,
+                            "mediaProjectionActive" to FridayForegroundService.isMediaProjectionActive,
                             "muted" to FridayForegroundService.isMuted,
                             "taskCount" to FridayForegroundService.activeTaskCount,
                             "status" to FridayForegroundService.currentStatusText
@@ -114,6 +128,15 @@ class FridayAndroidBridge(
                         success = true,
                         message = "Device capabilities queried.",
                         data = getCapabilitiesInternal()
+                    )
+                }
+                "GET_ALL_PERMISSIONS_STATUS" -> {
+                    NativeBridgeResponse(
+                        requestId = request.requestId,
+                        action = request.action,
+                        success = true,
+                        message = "All Android permission statuses checked.",
+                        data = permissionHelper.getPermissionSummary()
                     )
                 }
                 "OPEN_URL" -> {
@@ -181,15 +204,59 @@ class FridayAndroidBridge(
                     val perm = request.payload?.get("permission") as? String ?: ""
                     val isGranted = permissionHelper.isPermissionGranted(perm)
                     if (!isGranted) {
+                        when (perm) {
+                            android.Manifest.permission.RECORD_AUDIO -> {
+                                activity.runOnUiThread { permissionHelper.requestRecordAudioPermission {} }
+                            }
+                            android.Manifest.permission.CAMERA -> {
+                                activity.runOnUiThread { permissionHelper.requestCameraPermission {} }
+                            }
+                            android.Manifest.permission.POST_NOTIFICATIONS -> {
+                                activity.runOnUiThread { permissionHelper.requestNotificationPermission() }
+                            }
+                        }
                         sendEventToWeb("PERMISSION_REQUIRED", mapOf("permission" to perm))
                     }
                     NativeBridgeResponse(
                         requestId = request.requestId,
                         action = request.action,
                         success = isGranted,
-                        message = if (isGranted) "Permission already granted." else "Permission required: $perm",
+                        message = if (isGranted) "Permission already granted." else "Requested permission: $perm",
                         data = mapOf("permission" to perm, "granted" to isGranted)
                     )
+                }
+                "START_SCREEN_CAPTURE" -> {
+                    gson.fromJson(startScreenCapture(), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
+                }
+                "STOP_SCREEN_CAPTURE" -> {
+                    gson.fromJson(stopScreenCapture(), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
+                }
+                "CAPTURE_SCREEN_SNAPSHOT" -> {
+                    val includeImage = request.payload?.get("includeImage") as? Boolean ?: true
+                    gson.fromJson(captureScreenSnapshot(includeImage), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
+                }
+                "SCREEN_CLICK_ELEMENT" -> {
+                    val targetText = request.payload?.get("targetText") as? String ?: ""
+                    val confirmed = request.payload?.get("confirmed") as? Boolean ?: false
+                    gson.fromJson(performScreenClick(targetText, confirmed), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
+                }
+                "SCREEN_TAP_COORDINATES" -> {
+                    val x = (request.payload?.get("x") as? Number)?.toFloat() ?: 0f
+                    val y = (request.payload?.get("y") as? Number)?.toFloat() ?: 0f
+                    gson.fromJson(performScreenTap(x, y), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
+                }
+                "SCREEN_SCROLL" -> {
+                    val direction = request.payload?.get("direction") as? String ?: "down"
+                    gson.fromJson(performScreenScroll(direction), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
+                }
+                "SCREEN_INPUT_TEXT" -> {
+                    val text = request.payload?.get("text") as? String ?: ""
+                    val fieldHint = request.payload?.get("fieldHint") as? String
+                    gson.fromJson(performScreenInputText(text, fieldHint), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
+                }
+                "SCREEN_GLOBAL_NAVIGATION" -> {
+                    val navAction = request.payload?.get("navAction") as? String ?: "back"
+                    gson.fromJson(performGlobalNavigation(navAction), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
                 }
                 "START_FOREGROUND_SERVICE", "UPDATE_FOREGROUND_SERVICE" -> {
                     val statusText = request.payload?.get("statusText") as? String
@@ -291,7 +358,8 @@ class FridayAndroidBridge(
             "model" to Build.MODEL,
             "appVersion" to "1.0.0",
             "ignoringBatteryOptimizations" to ignoringBatteryOpt,
-            "foregroundServiceRunning" to FridayForegroundService.isRunning
+            "foregroundServiceRunning" to FridayForegroundService.isRunning,
+            "mediaProjectionActive" to FridayForegroundService.isMediaProjectionActive
         )
         return gson.toJson(info)
     }
@@ -302,16 +370,333 @@ class FridayAndroidBridge(
         } else {
             true
         }
+        val accRunning = FridayAccessibilityService.isServiceRunning
+        val mpActive = FridayForegroundService.isMediaProjectionActive
         return DeviceCapabilities(
             androidNative = true,
             browser = true,
             youtube = true,
             whatsapp = intentDispatcher.isPackageInstalled(IntentDispatcher.PACKAGE_WHATSAPP) ||
                     intentDispatcher.isPackageInstalled(IntentDispatcher.PACKAGE_WHATSAPP_BUSINESS),
-            accessibility = FridayAccessibilityService.isServiceRunning,
+            accessibility = accRunning,
+            screenVision = accRunning || mpActive,
+            mediaProjectionActive = mpActive,
             backgroundService = true,
             notifications = hasNotifPerm
         )
+    }
+
+    @JavascriptInterface
+    fun getAllPermissionsStatus(): String {
+        return gson.toJson(permissionHelper.getPermissionSummary())
+    }
+
+    @JavascriptInterface
+    fun startScreenCapture(): String {
+        if (FridayForegroundService.isMediaProjectionActive) {
+            val res = NativeBridgeResponse(
+                requestId = "sc_start_${System.currentTimeMillis()}",
+                action = "START_SCREEN_CAPTURE",
+                success = true,
+                message = "Screen Vision (MediaProjection) is already active.",
+                data = mapOf("active" to true, "mode" to "MEDIA_PROJECTION")
+            )
+            return gson.toJson(res)
+        }
+        if (activity is MainActivity) {
+            activity.requestScreenCaptureConsent()
+            val res = NativeBridgeResponse(
+                requestId = "sc_start_${System.currentTimeMillis()}",
+                action = "START_SCREEN_CAPTURE",
+                success = true,
+                message = "Opened Android MediaProjection consent prompt. Please tap 'Start now' on your device.",
+                data = mapOf("promptOpened" to true, "active" to false)
+            )
+            return gson.toJson(res)
+        }
+        val res = NativeBridgeResponse(
+            requestId = "sc_start_${System.currentTimeMillis()}",
+            action = "START_SCREEN_CAPTURE",
+            success = false,
+            errorCode = AndroidErrorCodes.FEATURE_NOT_AVAILABLE,
+            message = "Unable to launch MediaProjection consent prompt."
+        )
+        return gson.toJson(res)
+    }
+
+    @JavascriptInterface
+    fun stopScreenCapture(): String {
+        FridayForegroundService.stopMediaProjectionSession(activity)
+        val res = NativeBridgeResponse(
+            requestId = "sc_stop_${System.currentTimeMillis()}",
+            action = "STOP_SCREEN_CAPTURE",
+            success = true,
+            message = "Stopped Screen Vision (MediaProjection) session.",
+            data = mapOf("active" to false)
+        )
+        return gson.toJson(res)
+    }
+
+    @JavascriptInterface
+    fun captureScreenSnapshot(includeImage: Boolean): String {
+        val accService = FridayAccessibilityService.getInstance()
+        val mpFrame = if (includeImage) FridayForegroundService.getLatestProjectedFrame() else null
+
+        if (accService == null && mpFrame == null) {
+            val res = NativeBridgeResponse(
+                requestId = "snap_${System.currentTimeMillis()}",
+                action = "CAPTURE_SCREEN_SNAPSHOT",
+                success = false,
+                errorCode = AndroidErrorCodes.SCREEN_CAPTURE_NOT_ACTIVE,
+                message = "Screen Vision requires either Android Screen Capture (MediaProjection) or FRIDAY Accessibility Service to be enabled in the Permission Center."
+            )
+            return gson.toJson(res)
+        }
+
+        // If Accessibility Service is running, inspect UI hierarchy (and take screenshot if MediaProjection is not already providing frames)
+        val hierarchyData = accService?.inspectCurrentScreen(includeImage && mpFrame == null)
+
+        val finalCapture = if (hierarchyData != null) {
+            if (mpFrame != null && hierarchyData.screenshotBase64 == null) {
+                hierarchyData.copy(
+                    captured = true,
+                    captureMode = "MEDIA_PROJECTION_AND_ACCESSIBILITY",
+                    screenshotBase64 = mpFrame.first,
+                    width = mpFrame.second,
+                    height = mpFrame.third
+                )
+            } else {
+                hierarchyData
+            }
+        } else if (mpFrame != null) {
+            ScreenCaptureDataDto(
+                captured = true,
+                captureMode = "MEDIA_PROJECTION",
+                foregroundPackage = "active_screen",
+                foregroundAppName = "Device Screen",
+                screenSummary = "Captured live visual screen frame (${mpFrame.second}x${mpFrame.third}) via MediaProjection.",
+                visibleTexts = emptyList(),
+                uiElements = emptyList(),
+                screenshotBase64 = mpFrame.first,
+                width = mpFrame.second,
+                height = mpFrame.third
+            )
+        } else {
+            null
+        }
+
+        return if (finalCapture != null && finalCapture.captured) {
+            gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "snap_${System.currentTimeMillis()}",
+                    action = "CAPTURE_SCREEN_SNAPSHOT",
+                    success = true,
+                    message = finalCapture.screenSummary,
+                    data = finalCapture
+                )
+            )
+        } else {
+            gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "snap_${System.currentTimeMillis()}",
+                    action = "CAPTURE_SCREEN_SNAPSHOT",
+                    success = false,
+                    errorCode = AndroidErrorCodes.SCREEN_CAPTURE_NOT_ACTIVE,
+                    message = "Could not capture screen snapshot. Ensure Screen Capture or Accessibility Service is active."
+                )
+            )
+        }
+    }
+
+    @JavascriptInterface
+    fun performScreenClick(targetText: String, confirmed: Boolean): String {
+        val accService = FridayAccessibilityService.getInstance()
+            ?: return gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "click_${System.currentTimeMillis()}",
+                    action = "SCREEN_CLICK_ELEMENT",
+                    success = false,
+                    errorCode = AndroidErrorCodes.ACCESSIBILITY_REQUIRED,
+                    message = "Android Accessibility Service is not enabled. Enable FRIDAY Accessibility Service in the Permission Center to tap elements."
+                )
+            )
+
+        if (!confirmed && accService.isSensitiveTarget(targetText)) {
+            return gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "click_${System.currentTimeMillis()}",
+                    action = "SCREEN_CLICK_ELEMENT",
+                    success = false,
+                    errorCode = AndroidErrorCodes.CONFIRMATION_REQUIRED,
+                    message = "Safety Guardrail: Clicking '$targetText' is a sensitive action. Explicit user confirmation is required before executing.",
+                    data = mapOf("targetText" to targetText, "requiresConfirmation" to true)
+                )
+            )
+        }
+
+        val clicked = accService.performAuthorizedClick(targetText)
+        return gson.toJson(
+            NativeBridgeResponse(
+                requestId = "click_${System.currentTimeMillis()}",
+                action = "SCREEN_CLICK_ELEMENT",
+                success = clicked,
+                errorCode = if (clicked) null else AndroidErrorCodes.ACTION_FAILED,
+                message = if (clicked) "Clicked UI element matching '$targetText'." else "Could not find a clickable UI element matching '$targetText' on the current screen."
+            )
+        )
+    }
+
+    @JavascriptInterface
+    fun performScreenTap(x: Float, y: Float): String {
+        val accService = FridayAccessibilityService.getInstance()
+            ?: return gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "tap_${System.currentTimeMillis()}",
+                    action = "SCREEN_TAP_COORDINATES",
+                    success = false,
+                    errorCode = AndroidErrorCodes.ACCESSIBILITY_REQUIRED,
+                    message = "Android Accessibility Service is required to dispatch tap gestures."
+                )
+            )
+
+        val dispatched = accService.performTapGesture(x, y)
+        return gson.toJson(
+            NativeBridgeResponse(
+                requestId = "tap_${System.currentTimeMillis()}",
+                action = "SCREEN_TAP_COORDINATES",
+                success = dispatched,
+                errorCode = if (dispatched) null else AndroidErrorCodes.ACTION_FAILED,
+                message = if (dispatched) "Tapped screen at (${x.toInt()}, ${y.toInt()})." else "Failed to dispatch tap at (${x.toInt()}, ${y.toInt()})."
+            )
+        )
+    }
+
+    @JavascriptInterface
+    fun performScreenScroll(direction: String): String {
+        val accService = FridayAccessibilityService.getInstance()
+            ?: return gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "scroll_${System.currentTimeMillis()}",
+                    action = "SCREEN_SCROLL",
+                    success = false,
+                    errorCode = AndroidErrorCodes.ACCESSIBILITY_REQUIRED,
+                    message = "Android Accessibility Service is required to scroll the screen."
+                )
+            )
+
+        val scrolled = accService.performScrollGesture(direction)
+        return gson.toJson(
+            NativeBridgeResponse(
+                requestId = "scroll_${System.currentTimeMillis()}",
+                action = "SCREEN_SCROLL",
+                success = scrolled,
+                errorCode = if (scrolled) null else AndroidErrorCodes.ACTION_FAILED,
+                message = if (scrolled) "Scrolled screen $direction." else "Could not scroll screen $direction."
+            )
+        )
+    }
+
+    @JavascriptInterface
+    fun performScreenInputText(text: String, fieldHint: String?): String {
+        val accService = FridayAccessibilityService.getInstance()
+            ?: return gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "input_${System.currentTimeMillis()}",
+                    action = "SCREEN_INPUT_TEXT",
+                    success = false,
+                    errorCode = AndroidErrorCodes.ACCESSIBILITY_REQUIRED,
+                    message = "Android Accessibility Service is required to enter text into fields."
+                )
+            )
+
+        val entered = accService.performInputText(text, fieldHint)
+        return gson.toJson(
+            NativeBridgeResponse(
+                requestId = "input_${System.currentTimeMillis()}",
+                action = "SCREEN_INPUT_TEXT",
+                success = entered,
+                errorCode = if (entered) null else AndroidErrorCodes.ACTION_FAILED,
+                message = if (entered) "Entered text into ${fieldHint ?: "input field"}." else "Could not find an editable non-password input field on the current screen."
+            )
+        )
+    }
+
+    @JavascriptInterface
+    fun performGlobalNavigation(navAction: String): String {
+        if (navAction.lowercase() == "home" || navAction.lowercase() == "go_home") {
+            return gson.toJson(intentDispatcher.goHome())
+        }
+        val accService = FridayAccessibilityService.getInstance()
+            ?: return gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "nav_${System.currentTimeMillis()}",
+                    action = "SCREEN_GLOBAL_NAVIGATION",
+                    success = false,
+                    errorCode = AndroidErrorCodes.ACCESSIBILITY_REQUIRED,
+                    message = "Android Accessibility Service is required for '$navAction' navigation."
+                )
+            )
+
+        val ok = accService.performNavigationAction(navAction)
+        return gson.toJson(
+            NativeBridgeResponse(
+                requestId = "nav_${System.currentTimeMillis()}",
+                action = "SCREEN_GLOBAL_NAVIGATION",
+                success = ok,
+                errorCode = if (ok) null else AndroidErrorCodes.ACTION_FAILED,
+                message = if (ok) "Executed Android '$navAction' navigation." else "Failed to execute '$navAction' navigation."
+            )
+        )
+    }
+
+    @JavascriptInterface
+    fun requestScreenCapture(): String = startScreenCapture()
+
+    @JavascriptInterface
+    fun inspectScreen(includeScreenshot: Boolean = false): String = captureScreenSnapshot(includeScreenshot)
+
+    @JavascriptInterface
+    fun captureScreenshot(): String = captureScreenSnapshot(true)
+
+    @JavascriptInterface
+    fun performScreenAction(actionJson: String): String {
+        return try {
+            val map = gson.fromJson(actionJson, Map::class.java)
+            val action = (map["action"] ?: map["actionType"] ?: "CLICK_TEXT") as String
+            val target = (map["targetText"] ?: map["target"] ?: "") as String
+            val text = (map["inputText"] ?: map["text"] ?: "") as String
+            val x = (map["x"] as? Number)?.toFloat()
+            val y = (map["y"] as? Number)?.toFloat()
+            val direction = (map["direction"] as? String) ?: "down"
+            val confirmed = (map["confirmed"] as? Boolean) ?: false
+
+            when (action.uppercase()) {
+                "CLICK_TEXT", "CLICK" -> performScreenClick(target, confirmed)
+                "TAP_COORDINATES", "TAP" -> if (x != null && y != null) performScreenTap(x, y) else performScreenClick(target, confirmed)
+                "SCROLL" -> performScreenScroll(direction)
+                "INPUT_TEXT", "TYPE" -> performScreenInputText(text, target)
+                "NAVIGATE", "NAV" -> performGlobalNavigation(target)
+                else -> gson.toJson(
+                    NativeBridgeResponse(
+                        requestId = "sa_${System.currentTimeMillis()}",
+                        action = "PERFORM_SCREEN_ACTION",
+                        success = false,
+                        errorCode = AndroidErrorCodes.UNSUPPORTED_ACTION,
+                        message = "Unsupported screen action: $action"
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "sa_err_${System.currentTimeMillis()}",
+                    action = "PERFORM_SCREEN_ACTION",
+                    success = false,
+                    errorCode = AndroidErrorCodes.ACTION_FAILED,
+                    message = e.localizedMessage ?: "Failed to perform screen action"
+                )
+            )
+        }
     }
 
     @JavascriptInterface
@@ -368,6 +753,7 @@ class FridayAndroidBridge(
         val status = mapOf(
             "running" to FridayForegroundService.isRunning,
             "voiceActive" to FridayForegroundService.isVoiceActive,
+            "mediaProjectionActive" to FridayForegroundService.isMediaProjectionActive,
             "muted" to FridayForegroundService.isMuted,
             "taskCount" to FridayForegroundService.activeTaskCount,
             "statusText" to FridayForegroundService.currentStatusText,
@@ -470,6 +856,7 @@ class FridayAndroidBridge(
             serviceRunning = isRunning,
             canPerformGestures = isRunning,
             canInspectHierarchy = isRunning,
+            canTakeScreenshot = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isRunning,
             notice = if (isRunning) "Accessibility Service is active." else "Accessibility Service is currently disabled in Android Settings."
         )
         return gson.toJson(status)
@@ -478,9 +865,23 @@ class FridayAndroidBridge(
     @JavascriptInterface
     fun requestNativePermission(permission: String): String {
         val granted = permissionHelper.isPermissionGranted(permission)
-        if (!granted && permission == android.Manifest.permission.RECORD_AUDIO) {
-            activity.runOnUiThread {
-                permissionHelper.requestRecordAudioPermission {}
+        if (!granted) {
+            when (permission) {
+                android.Manifest.permission.RECORD_AUDIO -> {
+                    activity.runOnUiThread {
+                        permissionHelper.requestRecordAudioPermission {}
+                    }
+                }
+                android.Manifest.permission.CAMERA -> {
+                    activity.runOnUiThread {
+                        permissionHelper.requestCameraPermission {}
+                    }
+                }
+                android.Manifest.permission.POST_NOTIFICATIONS -> {
+                    activity.runOnUiThread {
+                        permissionHelper.requestNotificationPermission()
+                    }
+                }
             }
         }
         val result = mapOf("permission" to permission, "granted" to granted)

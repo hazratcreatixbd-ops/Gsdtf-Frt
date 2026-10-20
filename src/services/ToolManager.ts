@@ -200,6 +200,34 @@ export class ToolManager {
         result = { success: true, count: apps.length, apps, message: `Discovered ${apps.length} installed apps.` };
       } else if (name === 'android_get_recent_apps' || name === 'get_recent_apps' || name === 'getRecentApps') {
         result = await androidBridge.getRecentApps();
+      } else if (name === 'android_check_permissions' || name === 'check_android_permissions') {
+        const summary = await androidBridge.getAllPermissionsStatus();
+        result = {
+          success: true,
+          message: 'Retrieved real-time Android permission statuses.',
+          permissions: summary,
+        };
+      } else if (name === 'android_request_screen_capture' || name === 'request_screen_capture') {
+        result = await androidBridge.requestScreenCapture();
+      } else if (name === 'android_stop_screen_capture' || name === 'stop_screen_capture') {
+        result = await androidBridge.stopScreenCapture();
+      } else if (name === 'android_inspect_screen' || name === 'inspect_screen' || name === 'read_screen') {
+        result = await androidBridge.inspectScreen(Boolean(args.includeScreenshot));
+      } else if (name === 'android_capture_screenshot' || name === 'capture_screenshot') {
+        result = await androidBridge.captureScreenshot();
+      } else if (name === 'android_screen_action' || name === 'screen_action') {
+        result = await androidBridge.performScreenAction({
+          action: args.action || args.screenAction || 'CLICK_TEXT',
+          targetText: args.targetText || args.target,
+          viewId: args.viewId,
+          inputText: args.inputText || args.text,
+          direction: args.direction,
+          x: args.x !== undefined ? Number(args.x) : undefined,
+          y: args.y !== undefined ? Number(args.y) : undefined,
+          endX: args.endX !== undefined ? Number(args.endX) : undefined,
+          endY: args.endY !== undefined ? Number(args.endY) : undefined,
+          confirmedSensitive: Boolean(args.confirmedSensitive),
+        });
       } else if (name === 'getBusinessProfile') {
         result = { success: true, profile: businessIntelligenceManager.getProfile() };
       } else if (name === 'updateBusinessProfile') {

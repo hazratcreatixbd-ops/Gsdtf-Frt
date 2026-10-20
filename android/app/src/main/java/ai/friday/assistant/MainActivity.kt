@@ -1,8 +1,11 @@
 package ai.friday.assistant
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
@@ -15,8 +18,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.WebViewAssetLoader
 
 /**
- * PART 6B — FRIDAY Android Native Main Activity
- * Hosts the WebView, injects the native bridge, and configures hardware audio permissions.
+ * PART 6B & PART 15 — FRIDAY Android Native Main Activity
+ * Hosts the WebView, injects the native bridge, and configures hardware audio, camera, and MediaProjection permissions.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -59,8 +62,19 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         val resources = req.resources ?: return@runOnUiThread
                         val wantsAudio = resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                        val wantsVideo = resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
                         if (wantsAudio) {
                             permissionHelper.requestRecordAudioPermission { granted ->
+                                runOnUiThread {
+                                    if (granted) {
+                                        req.grant(resources)
+                                    } else {
+                                        req.deny()
+                                    }
+                                }
+                            }
+                        } else if (wantsVideo) {
+                            permissionHelper.requestCameraPermission { granted ->
                                 runOnUiThread {
                                     if (granted) {
                                         req.grant(resources)
@@ -90,7 +104,11 @@ class MainActivity : AppCompatActivity() {
                     // Signal to web that native device wrapper is fully attached and ready
                     bridge.sendEventToWeb(
                         "DEVICE_READY",
-                        mapOf("adapter" to "native_android_bridge", "isNative" to true)
+                        mapOf(
+                            "adapter" to "native_android_bridge",
+                            "isNative" to true,
+                            "permissions" to permissionHelper.getPermissionSummary()
+                        )
                     )
                 }
             }
@@ -113,6 +131,55 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(appUrl)
     }
 
+    /**
+     * Launches the official Android MediaProjection system consent dialog.
+     * Never bypasses user consent.
+     */
+    fun requestScreenCaptureConsent() {
+        runOnUiThread {
+            try {
+                val mpManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
+                if (mpManager != null) {
+                    @Suppress("DEPRECATION")
+                    startActivityForResult(
+                        mpManager.createScreenCaptureIntent(),
+                        PermissionHelper.RC_MEDIA_PROJECTION
+                    )
+                } else {
+                    bridge.sendEventToWeb(
+                        "SCREEN_CAPTURE_STATE_CHANGED",
+                        mapOf("active" to false, "error" to "MediaProjectionManager unavailable on this device.")
+                    )
+                }
+            } catch (e: Exception) {
+                bridge.sendEventToWeb(
+                    "SCREEN_CAPTURE_STATE_CHANGED",
+                    mapOf("active" to false, "error" to (e.localizedMessage ?: "Failed to open screen capture consent dialog"))
+                )
+            }
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PermissionHelper.RC_MEDIA_PROJECTION) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                FridayForegroundService.startMediaProjectionSession(this, resultCode, data)
+                bridge.sendEventToWeb(
+                    "SCREEN_CAPTURE_STATE_CHANGED",
+                    mapOf("active" to true, "granted" to true, "mode" to "MEDIA_PROJECTION")
+                )
+            } else {
+                bridge.sendEventToWeb(
+                    "SCREEN_CAPTURE_STATE_CHANGED",
+                    mapOf("active" to false, "granted" to false, "message" to "Screen capture consent was cancelled by user.")
+                )
+            }
+        }
+    }
+
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -129,7 +196,9 @@ class MainActivity : AppCompatActivity() {
                     "state" to "FOREGROUND",
                     "foregroundServiceRunning" to FridayForegroundService.isRunning,
                     "voiceActive" to FridayForegroundService.isVoiceActive,
-                    "taskCount" to FridayForegroundService.activeTaskCount
+                    "mediaProjectionActive" to FridayForegroundService.isMediaProjectionActive,
+                    "taskCount" to FridayForegroundService.activeTaskCount,
+                    "permissions" to permissionHelper.getPermissionSummary()
                 )
             )
         }
@@ -138,7 +207,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         // Keep WebView JS timers and WebSocket/AudioContext alive when background service is active
-        if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.activeTaskCount > 0) {
+        if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.isMediaProjectionActive || FridayForegroundService.activeTaskCount > 0) {
             webView.resumeTimers()
         }
         if (::bridge.isInitialized) {
@@ -148,6 +217,7 @@ class MainActivity : AppCompatActivity() {
                     "state" to "PAUSED",
                     "foregroundServiceRunning" to FridayForegroundService.isRunning,
                     "voiceActive" to FridayForegroundService.isVoiceActive,
+                    "mediaProjectionActive" to FridayForegroundService.isMediaProjectionActive,
                     "taskCount" to FridayForegroundService.activeTaskCount
                 )
             )
@@ -157,7 +227,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         // Prevent Chromium WebView from freezing JS timers while FRIDAY foreground service is running
-        if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.activeTaskCount > 0) {
+        if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.isMediaProjectionActive || FridayForegroundService.activeTaskCount > 0) {
             webView.resumeTimers()
         }
         if (::bridge.isInitialized) {
@@ -167,6 +237,7 @@ class MainActivity : AppCompatActivity() {
                     "state" to "BACKGROUND",
                     "foregroundServiceRunning" to FridayForegroundService.isRunning,
                     "voiceActive" to FridayForegroundService.isVoiceActive,
+                    "mediaProjectionActive" to FridayForegroundService.isMediaProjectionActive,
                     "taskCount" to FridayForegroundService.activeTaskCount
                 )
             )
@@ -179,13 +250,28 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PermissionHelper.RC_AUDIO_RECORD) {
-            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            permissionHelper.onRecordAudioPermissionResult(granted)
-            bridge.sendEventToWeb(
-                "PERMISSION_REQUIRED",
-                mapOf("permission" to "android.permission.RECORD_AUDIO", "granted" to granted)
-            )
+        val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+        when (requestCode) {
+            PermissionHelper.RC_AUDIO_RECORD -> {
+                permissionHelper.onRecordAudioPermissionResult(granted)
+                bridge.sendEventToWeb(
+                    "PERMISSION_REQUIRED",
+                    mapOf("permission" to "android.permission.RECORD_AUDIO", "granted" to granted)
+                )
+            }
+            PermissionHelper.RC_CAMERA -> {
+                permissionHelper.onCameraPermissionResult(granted)
+                bridge.sendEventToWeb(
+                    "PERMISSION_REQUIRED",
+                    mapOf("permission" to "android.permission.CAMERA", "granted" to granted)
+                )
+            }
+            PermissionHelper.RC_NOTIFICATIONS -> {
+                bridge.sendEventToWeb(
+                    "PERMISSION_REQUIRED",
+                    mapOf("permission" to "android.permission.POST_NOTIFICATIONS", "granted" to granted)
+                )
+            }
         }
     }
 
@@ -193,8 +279,8 @@ class MainActivity : AppCompatActivity() {
         if (webView.canGoBack()) {
             webView.goBack()
         } else {
-            // Move task to back rather than destroying MainActivity if a voice session or task is running
-            if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.activeTaskCount > 0) {
+            // Move task to back rather than destroying MainActivity if a voice session, screen share, or task is running
+            if (FridayForegroundService.isRunning || FridayForegroundService.isVoiceActive || FridayForegroundService.isMediaProjectionActive || FridayForegroundService.activeTaskCount > 0) {
                 moveTaskToBack(true)
             } else {
                 super.onBackPressed()

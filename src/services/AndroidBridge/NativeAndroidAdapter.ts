@@ -12,12 +12,16 @@ import {
   AccessibilityStatusResult,
   AndroidPermission,
   AndroidPermissionResult,
+  AndroidPermissionsSummary,
   AndroidActionRequest,
   InstalledAppInfo,
   NativeExecutionMode,
   NativeCapabilityStatus,
+  ScreenContextSnapshot,
+  ScreenActionRequest,
 } from '../../types/android';
 import { nativeEventBus } from './NativeEventBus';
+import { permissionManager } from './PermissionManager';
 import { DEFAULT_MOCK_INSTALLED_APPS } from './WebMockAdapter';
 
 // Declaration of the native Android JavascriptInterface
@@ -27,6 +31,7 @@ declare global {
       isAvailable?: () => boolean;
       getDeviceInfo?: () => string;
       getCapabilities?: () => string;
+      getAllPermissionsStatus?: () => string;
       openExternalUrl?: (url: string) => string;
       openApp?: (packageName: string) => string;
       launchApp?: (packageName: string) => string;
@@ -43,6 +48,12 @@ declare global {
       executeAction?: (jsonAction: string) => string;
       postMessage?: (jsonRequest: string) => string;
       openSettings?: (target: string) => string;
+      requestScreenCapture?: () => string;
+      startScreenCapture?: () => string;
+      stopScreenCapture?: () => string;
+      inspectScreen?: (includeScreenshot: boolean) => string;
+      captureScreenshot?: () => string;
+      performScreenAction?: (jsonRequest: string) => string;
       startForegroundService?: (
         statusText: string,
         voiceActive: boolean,
@@ -68,6 +79,23 @@ export class NativeAndroidAdapter implements IAndroidBridge {
       window.fridayReceiveNativeEvent = (type: string, jsonPayload: string, eventId?: string) => {
         try {
           const parsed = jsonPayload ? JSON.parse(jsonPayload) : {};
+          if (type === 'DEVICE_READY' || type === 'APP_LIFECYCLE_CHANGED') {
+            if (parsed.permissions) {
+              permissionManager.syncFromSummary(parsed.permissions);
+            }
+          } else if (type === 'PERMISSION_REQUIRED' && parsed.permission) {
+            permissionManager.setAndroidPermissionGranted(parsed.permission, !!parsed.granted);
+          } else if (type === 'ACCESSIBILITY_STATUS_CHANGED') {
+            permissionManager.setAndroidPermissionGranted(
+              'android.permission.BIND_ACCESSIBILITY_SERVICE',
+              !!parsed.enabled
+            );
+          } else if (type === 'SCREEN_CAPTURE_STATE_CHANGED') {
+            permissionManager.setAndroidPermissionGranted(
+              'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION',
+              !!parsed.active
+            );
+          }
           nativeEventBus.emit(type as any, parsed, eventId);
         } catch (e) {
           console.error('[NativeAndroidAdapter] Failed to parse native event:', e);
@@ -119,6 +147,8 @@ export class NativeAndroidAdapter implements IAndroidBridge {
         youtube: false,
         whatsapp: false,
         accessibility: false,
+        screenVision: false,
+        mediaProjectionActive: false,
         notifications: false,
         backgroundExecution: false,
         installedAppsCheck: false,
@@ -136,6 +166,8 @@ export class NativeAndroidAdapter implements IAndroidBridge {
           youtube: parsed.youtube ?? true,
           whatsapp: parsed.whatsapp ?? true,
           accessibility: parsed.accessibility ?? false,
+          screenVision: parsed.screenVision ?? parsed.accessibility ?? false,
+          mediaProjectionActive: parsed.mediaProjectionActive ?? false,
           notifications: parsed.notifications ?? true,
           backgroundExecution: parsed.backgroundExecution ?? parsed.backgroundService ?? true,
           installedAppsCheck: parsed.installedAppsCheck ?? true,
@@ -152,6 +184,8 @@ export class NativeAndroidAdapter implements IAndroidBridge {
       youtube: true,
       whatsapp: true,
       accessibility: true,
+      screenVision: true,
+      mediaProjectionActive: false,
       notifications: true,
       backgroundExecution: true,
       installedAppsCheck: true,
@@ -751,6 +785,289 @@ export class NativeAndroidAdapter implements IAndroidBridge {
       taskCount: 0,
       statusText: 'Standby',
     };
+  }
+
+  public async getAllPermissionsStatus(): Promise<AndroidPermissionsSummary> {
+    if (!this.isAvailable()) {
+      return {
+        microphone: {
+          id: 'microphone',
+          name: 'Microphone Access',
+          description: 'Required for hands-free voice conversation with FRIDAY.',
+          status: 'NOT_GRANTED',
+          canRequestInApp: true,
+        },
+        screenCapture: {
+          id: 'screen_capture',
+          name: 'Screen Capture (MediaProjection)',
+          description: 'Allows FRIDAY to inspect visual content on your screen when you explicitly start screen sharing.',
+          status: 'NOT_SUPPORTED',
+          canRequestInApp: false,
+        },
+        accessibility: {
+          id: 'accessibility',
+          name: 'Accessibility Service',
+          description: 'Enables FRIDAY to read screen UI hierarchy and perform authorized taps, scrolls, and text input across apps.',
+          status: 'NOT_SUPPORTED',
+          canRequestInApp: false,
+          settingsTarget: 'accessibility',
+        },
+        notifications: {
+          id: 'notifications',
+          name: 'Active Session Notifications',
+          description: 'Required on Android 13+ to display persistent status and Stop buttons for background voice and screen capture.',
+          status: 'NOT_GRANTED',
+          canRequestInApp: true,
+          settingsTarget: 'notifications',
+        },
+        camera: {
+          id: 'camera',
+          name: 'Camera Access (Optional)',
+          description: 'Optional permission for visual camera inspection when explicitly enabled.',
+          status: 'NOT_GRANTED',
+          canRequestInApp: true,
+        },
+        batteryOptimization: {
+          id: 'battery_optimization',
+          name: 'Unrestricted Background Operation',
+          description: 'Prevents Android from suspending FRIDAY during background voice or multi-step tasks.',
+          status: 'NOT_SUPPORTED',
+          canRequestInApp: false,
+          settingsTarget: 'battery',
+        },
+        checkedAt: Date.now(),
+      };
+    }
+
+    try {
+      if (typeof window.FridayAndroidBridge?.getAllPermissionsStatus === 'function') {
+        const raw = window.FridayAndroidBridge.getAllPermissionsStatus();
+        if (raw) {
+          const parsed = JSON.parse(raw) as AndroidPermissionsSummary;
+          permissionManager.savePermissionsSummary(parsed);
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('[NativeAndroidAdapter] getAllPermissionsStatus error:', e);
+    }
+
+    const acc = await this.requestAccessibilityStatus();
+    const fg = await this.getForegroundServiceStatus();
+    const fallback: AndroidPermissionsSummary = {
+      microphone: {
+        id: 'microphone',
+        name: 'Microphone Access',
+        description: 'Required for hands-free voice conversation with FRIDAY.',
+        status: 'NOT_GRANTED',
+        canRequestInApp: true,
+      },
+      screenCapture: {
+        id: 'screen_capture',
+        name: 'Screen Capture (MediaProjection)',
+        description: 'Allows FRIDAY to inspect visual content on your screen when you explicitly start screen sharing.',
+        status: 'NOT_GRANTED',
+        canRequestInApp: true,
+      },
+      accessibility: {
+        id: 'accessibility',
+        name: 'Accessibility Service',
+        description: 'Enables FRIDAY to read screen UI hierarchy and perform authorized taps, scrolls, and text input across apps.',
+        status: acc.enabled ? 'GRANTED' : 'NOT_GRANTED',
+        canRequestInApp: false,
+        settingsTarget: 'accessibility',
+      },
+      notifications: {
+        id: 'notifications',
+        name: 'Active Session Notifications',
+        description: 'Required on Android 13+ to display persistent status and Stop buttons for background voice and screen capture.',
+        status: 'NOT_GRANTED',
+        canRequestInApp: true,
+        settingsTarget: 'notifications',
+      },
+      camera: {
+        id: 'camera',
+        name: 'Camera Access (Optional)',
+        description: 'Optional permission for visual camera inspection when explicitly enabled.',
+        status: 'NOT_GRANTED',
+        canRequestInApp: true,
+      },
+      batteryOptimization: {
+        id: 'battery_optimization',
+        name: 'Unrestricted Background Operation',
+        description: 'Prevents Android from suspending FRIDAY during background voice or multi-step tasks.',
+        status: fg.ignoringBatteryOptimizations ? 'GRANTED' : 'NOT_GRANTED',
+        canRequestInApp: true,
+        settingsTarget: 'battery',
+      },
+      checkedAt: Date.now(),
+    };
+    return fallback;
+  }
+
+  public async requestScreenCapture(): Promise<AndroidActionResult> {
+    if (!this.isAvailable()) {
+      return {
+        success: false,
+        action: 'REQUEST_SCREEN_CAPTURE',
+        errorCode: 'BRIDGE_UNAVAILABLE',
+        message: 'Android Screen Capture (MediaProjection) requires the native FRIDAY Android APK.',
+      };
+    }
+
+    try {
+      if (typeof window.FridayAndroidBridge?.requestScreenCapture === 'function') {
+        const raw = window.FridayAndroidBridge.requestScreenCapture();
+        return raw
+          ? JSON.parse(raw)
+          : {
+              success: true,
+              action: 'REQUEST_SCREEN_CAPTURE',
+              message: 'Requested Android system MediaProjection screen capture consent.',
+            };
+      }
+      return this.executeSupportedAction({ actionType: 'REQUEST_SCREEN_CAPTURE' });
+    } catch (e: any) {
+      return {
+        success: false,
+        action: 'REQUEST_SCREEN_CAPTURE',
+        errorCode: 'NATIVE_EXCEPTION',
+        message: e?.message || 'Failed to request Android screen capture permission',
+      };
+    }
+  }
+
+  public async stopScreenCapture(): Promise<AndroidActionResult> {
+    if (!this.isAvailable()) {
+      return {
+        success: false,
+        action: 'STOP_SCREEN_CAPTURE',
+        errorCode: 'BRIDGE_UNAVAILABLE',
+        message: 'Native Android bridge is not available.',
+      };
+    }
+
+    try {
+      if (typeof window.FridayAndroidBridge?.stopScreenCapture === 'function') {
+        const raw = window.FridayAndroidBridge.stopScreenCapture();
+        return raw
+          ? JSON.parse(raw)
+          : {
+              success: true,
+              action: 'STOP_SCREEN_CAPTURE',
+              message: 'Screen capture session stopped.',
+            };
+      }
+      return this.executeSupportedAction({ actionType: 'STOP_SCREEN_CAPTURE' });
+    } catch (e: any) {
+      return {
+        success: false,
+        action: 'STOP_SCREEN_CAPTURE',
+        errorCode: 'NATIVE_EXCEPTION',
+        message: e?.message || 'Failed to stop Android screen capture',
+      };
+    }
+  }
+
+  public async inspectScreen(includeScreenshot = false): Promise<AndroidActionResult<ScreenContextSnapshot>> {
+    if (!this.isAvailable()) {
+      return {
+        success: false,
+        action: 'INSPECT_SCREEN',
+        errorCode: 'BRIDGE_UNAVAILABLE',
+        message: 'Live Android screen inspection requires the native FRIDAY Android app with Accessibility Service or Screen Capture enabled.',
+      };
+    }
+
+    try {
+      if (typeof window.FridayAndroidBridge?.inspectScreen === 'function') {
+        const raw = window.FridayAndroidBridge.inspectScreen(includeScreenshot);
+        if (raw) {
+          return JSON.parse(raw);
+        }
+      }
+      return (await this.executeSupportedAction({
+        actionType: 'INSPECT_SCREEN',
+        includeScreenshot,
+      })) as AndroidActionResult<ScreenContextSnapshot>;
+    } catch (e: any) {
+      return {
+        success: false,
+        action: 'INSPECT_SCREEN',
+        errorCode: 'NATIVE_EXCEPTION',
+        message: e?.message || 'Failed to inspect Android screen',
+      };
+    }
+  }
+
+  public async captureScreenshot(): Promise<AndroidActionResult<ScreenContextSnapshot>> {
+    if (!this.isAvailable()) {
+      return {
+        success: false,
+        action: 'CAPTURE_SCREENSHOT',
+        errorCode: 'BRIDGE_UNAVAILABLE',
+        message: 'Capturing an Android screenshot requires the native FRIDAY Android app with Screen Capture or Accessibility Service enabled.',
+      };
+    }
+
+    try {
+      if (typeof window.FridayAndroidBridge?.captureScreenshot === 'function') {
+        const raw = window.FridayAndroidBridge.captureScreenshot();
+        if (raw) {
+          return JSON.parse(raw);
+        }
+      }
+      return (await this.executeSupportedAction({
+        actionType: 'CAPTURE_SCREENSHOT',
+        includeScreenshot: true,
+      })) as AndroidActionResult<ScreenContextSnapshot>;
+    } catch (e: any) {
+      return {
+        success: false,
+        action: 'CAPTURE_SCREENSHOT',
+        errorCode: 'NATIVE_EXCEPTION',
+        message: e?.message || 'Failed to capture Android screenshot',
+      };
+    }
+  }
+
+  public async performScreenAction(request: ScreenActionRequest): Promise<AndroidActionResult> {
+    if (!this.isAvailable()) {
+      return {
+        success: false,
+        action: 'SCREEN_ACTION',
+        errorCode: 'BRIDGE_UNAVAILABLE',
+        message: `Performing Android screen action (${request.action}) requires the native FRIDAY Android app with Accessibility Service enabled.`,
+      };
+    }
+
+    try {
+      if (typeof window.FridayAndroidBridge?.performScreenAction === 'function') {
+        const raw = window.FridayAndroidBridge.performScreenAction(JSON.stringify(request));
+        if (raw) {
+          return JSON.parse(raw);
+        }
+      }
+      return this.executeSupportedAction({
+        actionType: 'SCREEN_ACTION',
+        screenAction: request.action,
+        target: request.targetText || request.viewId,
+        text: request.inputText,
+        x: request.x,
+        y: request.y,
+        endX: request.endX,
+        endY: request.endY,
+        direction: request.direction,
+        confirmedSensitive: request.confirmedSensitive,
+      });
+    } catch (e: any) {
+      return {
+        success: false,
+        action: 'SCREEN_ACTION',
+        errorCode: 'NATIVE_EXCEPTION',
+        message: e?.message || `Failed to execute screen action ${request.action}`,
+      };
+    }
   }
 
   public async executeSupportedAction(action: AndroidActionRequest): Promise<AndroidActionResult> {

@@ -166,6 +166,62 @@ check(
   '9 & 10. Debug APK and Release build configurations are prepared (Release does not require signing credentials)'
 );
 
+// 11. Part 15 Screen Vision, Permission Center & Screen Interaction checks
+const manifestContent = fs.readFileSync(path.join(appDir, 'src/main/AndroidManifest.xml'), 'utf8');
+const permHelperContent = fs.readFileSync(
+  path.join(appDir, 'src/main/java/ai/friday/assistant/PermissionHelper.kt'),
+  'utf8'
+);
+const accServiceContent = fs.readFileSync(
+  path.join(appDir, 'src/main/java/ai/friday/assistant/FridayAccessibilityService.kt'),
+  'utf8'
+);
+const fgServiceContent = fs.readFileSync(
+  path.join(appDir, 'src/main/java/ai/friday/assistant/FridayForegroundService.kt'),
+  'utf8'
+);
+const bridgeKtContent = fs.readFileSync(
+  path.join(appDir, 'src/main/java/ai/friday/assistant/FridayAndroidBridge.kt'),
+  'utf8'
+);
+
+check(
+  manifestContent.includes('android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION') &&
+    manifestContent.includes('mediaProjection'),
+  '11a. AndroidManifest.xml declares FOREGROUND_SERVICE_MEDIA_PROJECTION and mediaProjection foregroundServiceType'
+);
+
+check(
+  permHelperContent.includes('getAllPermissionsStatus') &&
+    permHelperContent.includes('screenCaptureActive'),
+  '11b. PermissionHelper.kt inspects real-time Android permission states (Microphone, Screen Capture, Accessibility, Notifications, Camera, Battery)'
+);
+
+check(
+  accServiceContent.includes('inspectScreenHierarchy') &&
+    accServiceContent.includes('captureScreenshotBase64') &&
+    accServiceContent.includes('isSensitiveAction') &&
+    accServiceContent.includes('performScreenAction'),
+  '11c. FridayAccessibilityService.kt supports UI hierarchy inspection, screenshot capture, and sensitive action confirmation guards'
+);
+
+check(
+  fgServiceContent.includes('MediaProjection') &&
+    fgServiceContent.includes('ACTION_STOP_SCREEN_CAPTURE') &&
+    fgServiceContent.includes('captureFrameBase64'),
+  '11d. FridayForegroundService.kt manages MediaProjection screen capture and Stop Screen Share notification action'
+);
+
+check(
+  bridgeKtContent.includes('getAllPermissionsStatus') &&
+    bridgeKtContent.includes('requestScreenCapture') &&
+    bridgeKtContent.includes('stopScreenCapture') &&
+    bridgeKtContent.includes('inspectScreen') &&
+    bridgeKtContent.includes('captureScreenshot') &&
+    bridgeKtContent.includes('performScreenAction'),
+  '11e. FridayAndroidBridge.kt exposes Part 15 Permission Center, Screen Vision, and Screen Interaction methods'
+);
+
 // Check local Java / Android SDK environment availability
 let javaInstalled = false;
 try {

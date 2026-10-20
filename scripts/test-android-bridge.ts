@@ -475,6 +475,141 @@ async function runTestSuite() {
     );
   }
 
+  // Test 26: Part 15 — Permission Center & Web Fallback Honesty
+  {
+    const permsSummary = await bridge.getAllPermissionsStatus();
+    const inspectWebRes = await toolManager.executeTool('android_inspect_screen', { includeScreenshot: true }, 't_insp_web');
+    assert(
+      Boolean(
+        permsSummary.microphone &&
+        permsSummary.screenCapture.status === 'NOT_SUPPORTED' &&
+        permsSummary.accessibility.status === 'NOT_SUPPORTED' &&
+        inspectWebRes.success === false &&
+        inspectWebRes.errorCode === 'BRIDGE_UNAVAILABLE'
+      ),
+      'Test 26: Part 15 Permission Center & Screen Vision honestly report NOT_SUPPORTED / BRIDGE_UNAVAILABLE in browser mode'
+    );
+  }
+
+  // Test 27: Part 15 — Native Screen Vision, UI Hierarchy, Screenshot & Sensitive Action Guard
+  {
+    let mockScreenCaptureActive = false;
+    (globalThis as any).window = (globalThis as any).window || {};
+    (globalThis as any).window.FridayAndroidBridge = {
+      isAvailable: () => true,
+      getAllPermissionsStatus: () =>
+        JSON.stringify({
+          microphone: { id: 'microphone', name: 'Microphone', description: '', status: 'GRANTED', canRequestInApp: true },
+          screenCapture: {
+            id: 'screen_capture',
+            name: 'Screen Capture',
+            description: '',
+            status: mockScreenCaptureActive ? 'GRANTED' : 'NOT_GRANTED',
+            canRequestInApp: true,
+          },
+          accessibility: { id: 'accessibility', name: 'Accessibility', description: '', status: 'GRANTED', canRequestInApp: false },
+          notifications: { id: 'notifications', name: 'Notifications', description: '', status: 'GRANTED', canRequestInApp: true },
+          camera: { id: 'camera', name: 'Camera', description: '', status: 'NOT_GRANTED', canRequestInApp: true },
+          checkedAt: Date.now(),
+        }),
+      requestScreenCapture: () => {
+        mockScreenCaptureActive = true;
+        return JSON.stringify({
+          success: true,
+          action: 'REQUEST_SCREEN_CAPTURE',
+          message: 'MediaProjection screen capture active.',
+        });
+      },
+      stopScreenCapture: () => {
+        mockScreenCaptureActive = false;
+        return JSON.stringify({
+          success: true,
+          action: 'STOP_SCREEN_CAPTURE',
+          message: 'Screen capture stopped.',
+        });
+      },
+      inspectScreen: (includeScreenshot: boolean) =>
+        JSON.stringify({
+          success: true,
+          action: 'INSPECT_SCREEN',
+          message: 'Inspected screen on Settings.',
+          data: {
+            packageName: 'com.android.settings',
+            appName: 'Settings',
+            summaryText: 'Settings | Wi-Fi | Bluetooth | Accessibility',
+            elements: [
+              {
+                id: 'node_1',
+                className: 'TextView',
+                text: 'Accessibility',
+                contentDescription: 'Accessibility settings',
+                viewIdResourceName: 'com.android.settings:id/title',
+                clickable: true,
+                editable: false,
+                scrollable: false,
+                focused: false,
+                bounds: { left: 0, top: 200, right: 1080, bottom: 320, centerX: 540, centerY: 260 },
+              },
+            ],
+            screenshotBase64: includeScreenshot ? 'bW9ja19qcGVnX2Jhc2U2NA==' : undefined,
+            screenWidth: 1080,
+            screenHeight: 2400,
+            captureMethod: includeScreenshot ? 'HYBRID' : 'ACCESSIBILITY_HIERARCHY',
+            timestamp: Date.now(),
+          },
+        }),
+      performScreenAction: (reqJson: string) => {
+        const req = JSON.parse(reqJson);
+        if (req.targetText && /delete|pay|send/i.test(req.targetText) && !req.confirmedSensitive) {
+          return JSON.stringify({
+            success: false,
+            action: 'SCREEN_ACTION',
+            errorCode: 'CONFIRMATION_REQUIRED',
+            message: `Sensitive action ("${req.targetText}") requires explicit user confirmation.`,
+          });
+        }
+        return JSON.stringify({
+          success: true,
+          action: 'SCREEN_ACTION',
+          message: `Executed ${req.action} on "${req.targetText || req.direction || 'screen'}"`,
+        });
+      },
+    };
+
+    bridge.setAdapter(new NativeAndroidAdapter());
+
+    const reqCapRes = await toolManager.executeTool('android_request_screen_capture', {}, 't_req_cap');
+    const inspectRes = await toolManager.executeTool('android_inspect_screen', { includeScreenshot: true }, 't_insp_nat');
+    const safeClickRes = await toolManager.executeTool(
+      'android_screen_action',
+      { action: 'CLICK_TEXT', targetText: 'Accessibility' },
+      't_click_safe'
+    );
+    const sensitiveClickRes = await toolManager.executeTool(
+      'android_screen_action',
+      { action: 'CLICK_TEXT', targetText: 'Delete Account' },
+      't_click_sens'
+    );
+    const stopCapRes = await toolManager.executeTool('android_stop_screen_capture', {}, 't_stop_cap');
+
+    delete (globalThis as any).window.FridayAndroidBridge;
+    bridge.setAdapter(new WebMockAdapter());
+
+    assert(
+      reqCapRes.success === true &&
+      inspectRes.success === true &&
+      inspectRes.data?.appName === 'Settings' &&
+      Boolean(inspectRes.data?.screenshotBase64) &&
+      safeClickRes.success === true &&
+      sensitiveClickRes.success === false &&
+      sensitiveClickRes.errorCode === 'CONFIRMATION_REQUIRED' &&
+      Boolean(sensitiveClickRes.data?.previewId) &&
+      stopCapRes.success === true &&
+      mockScreenCaptureActive === false,
+      'Test 27: Part 15 Native Screen Vision, UI Hierarchy, Screenshot & Sensitive Action Confirmation Guard verified'
+    );
+  }
+
   console.log('\n====================================================');
   console.log(`TEST SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log('====================================================');

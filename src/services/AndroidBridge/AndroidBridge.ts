@@ -17,11 +17,14 @@ import {
   AccessibilityStatusResult,
   AndroidPermission,
   AndroidPermissionResult,
+  AndroidPermissionsSummary,
   AndroidActionRequest,
   ActionPreviewItem,
   InstalledAppInfo,
   NativeExecutionMode,
   NativeCapabilityStatus,
+  ScreenContextSnapshot,
+  ScreenActionRequest,
 } from '../../types/android';
 
 export class AndroidBridge implements IAndroidBridge {
@@ -435,6 +438,116 @@ export class AndroidBridge implements IAndroidBridge {
       statusText: 'Tab Scope (Web)',
       ignoringBatteryOptimizations: false,
     };
+  }
+
+  public async getAllPermissionsStatus(): Promise<AndroidPermissionsSummary> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.getAllPermissionsStatus === 'function') {
+      const summary = await adapter.getAllPermissionsStatus();
+      permissionManager.savePermissionsSummary(summary);
+      return summary;
+    }
+    return this.webMockAdapter.getAllPermissionsStatus();
+  }
+
+  public async requestScreenCapture(): Promise<AndroidActionResult> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.requestScreenCapture === 'function') {
+      return this.executeWithTimeout(
+        () => adapter.requestScreenCapture!(),
+        'REQUEST_SCREEN_CAPTURE'
+      );
+    }
+    return this.webMockAdapter.requestScreenCapture();
+  }
+
+  public async stopScreenCapture(): Promise<AndroidActionResult> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.stopScreenCapture === 'function') {
+      return this.executeWithTimeout(
+        () => adapter.stopScreenCapture!(),
+        'STOP_SCREEN_CAPTURE'
+      );
+    }
+    return this.webMockAdapter.stopScreenCapture();
+  }
+
+  public async inspectScreen(includeScreenshot = false): Promise<AndroidActionResult<ScreenContextSnapshot>> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.inspectScreen === 'function') {
+      return this.executeWithTimeout(
+        () => adapter.inspectScreen!(includeScreenshot),
+        'INSPECT_SCREEN',
+        10000
+      );
+    }
+    return this.webMockAdapter.inspectScreen(includeScreenshot);
+  }
+
+  public async captureScreenshot(): Promise<AndroidActionResult<ScreenContextSnapshot>> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.captureScreenshot === 'function') {
+      return this.executeWithTimeout(
+        () => adapter.captureScreenshot!(),
+        'CAPTURE_SCREENSHOT',
+        10000
+      );
+    }
+    return this.webMockAdapter.captureScreenshot();
+  }
+
+  public async performScreenAction(request: ScreenActionRequest): Promise<AndroidActionResult> {
+    const adapter = this.getActiveAdapter();
+    if (typeof adapter.performScreenAction === 'function') {
+      const res = await this.executeWithTimeout(
+        () => adapter.performScreenAction!(request),
+        `SCREEN_ACTION_${request.action}`,
+        10000
+      );
+
+      // If native Accessibility service blocked a sensitive action requiring confirmation, register an ActionPreviewItem
+      if (!res.success && res.errorCode === 'CONFIRMATION_REQUIRED') {
+        const previewId = `prev_screen_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const preview: ActionPreviewItem = {
+          id: previewId,
+          actionType: 'SCREEN_ACTION',
+          title: `Confirm Screen Action: ${request.action}`,
+          appName: 'Screen Interaction',
+          recipient: request.targetText || request.viewId || 'Current Screen',
+          messagePreview: res.message || `Action "${request.action}" on "${request.targetText || request.viewId || 'screen'}" requires explicit confirmation.`,
+          permissionLevel: 'REQUIRES_CONFIRMATION',
+          riskNotice: 'This screen element appears to trigger a sensitive action (payment, deletion, or external send).',
+          status: 'pending_confirmation',
+          createdAt: Date.now(),
+          payload: {
+            actionType: 'SCREEN_ACTION',
+            screenAction: request.action,
+            target: request.targetText || request.viewId,
+            text: request.inputText,
+            x: request.x,
+            y: request.y,
+            endX: request.endX,
+            endY: request.endY,
+            direction: request.direction,
+            confirmedSensitive: true,
+          },
+        };
+        this.actionPreviews.set(previewId, preview);
+        this.notifyPreviews();
+
+        return {
+          ...res,
+          data: {
+            ...(res.data as any),
+            previewId,
+            confirmationPrompt: res.message,
+          },
+        };
+      }
+
+      return res;
+    }
+    return this.webMockAdapter.performScreenAction(request);
   }
 
   public async executeSupportedAction(action: AndroidActionRequest): Promise<AndroidActionResult> {

@@ -13,10 +13,13 @@ import {
   AccessibilityStatusResult,
   AndroidPermission,
   AndroidPermissionResult,
+  AndroidPermissionsSummary,
   AndroidActionRequest,
   InstalledAppInfo,
   NativeExecutionMode,
   NativeCapabilityStatus,
+  ScreenContextSnapshot,
+  ScreenActionRequest,
 } from '../../types/android';
 
 export const DEFAULT_MOCK_INSTALLED_APPS: InstalledAppInfo[] = [
@@ -402,6 +405,26 @@ export class WebMockAdapter implements IAndroidBridge {
         return this.getRecentApps();
       case 'OPEN_SETTINGS':
         return this.openSettings(action.target || 'settings');
+      case 'INSPECT_SCREEN':
+        return this.inspectScreen(action.includeScreenshot);
+      case 'CAPTURE_SCREENSHOT':
+        return this.captureScreenshot();
+      case 'REQUEST_SCREEN_CAPTURE':
+        return this.requestScreenCapture();
+      case 'STOP_SCREEN_CAPTURE':
+        return this.stopScreenCapture();
+      case 'SCREEN_ACTION':
+        return this.performScreenAction({
+          action: action.screenAction || 'CLICK_TEXT',
+          targetText: action.target,
+          inputText: action.text,
+          x: action.x,
+          y: action.y,
+          endX: action.endX,
+          endY: action.endY,
+          direction: action.direction ? (action.direction.toUpperCase() as 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') : undefined,
+          confirmedSensitive: action.confirmedSensitive,
+        });
       default:
         return {
           success: false,
@@ -410,5 +433,124 @@ export class WebMockAdapter implements IAndroidBridge {
           message: `Action ${action.actionType} is not supported in browser environment without native Android bridge.`,
         };
     }
+  }
+
+  public async getAllPermissionsStatus(): Promise<AndroidPermissionsSummary> {
+    let micGranted = false;
+    let camGranted = false;
+    let notifGranted = false;
+
+    if (typeof navigator !== 'undefined' && navigator.permissions?.query) {
+      try {
+        const micPerm = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        micGranted = micPerm.state === 'granted';
+      } catch {
+        // Ignore
+      }
+      try {
+        const camPerm = await navigator.permissions.query({ name: 'camera' as PermissionName });
+        camGranted = camPerm.state === 'granted';
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      notifGranted = Notification.permission === 'granted';
+    }
+
+    return {
+      microphone: {
+        id: 'microphone',
+        name: 'Microphone Access',
+        description: 'Required for hands-free voice conversation with FRIDAY.',
+        status: micGranted ? 'GRANTED' : 'NOT_GRANTED',
+        canRequestInApp: true,
+      },
+      screenCapture: {
+        id: 'screen_capture',
+        name: 'Screen Capture (MediaProjection)',
+        description: 'Allows FRIDAY to inspect visual content on your Android screen when you explicitly start screen sharing.',
+        status: 'NOT_SUPPORTED',
+        canRequestInApp: false,
+      },
+      accessibility: {
+        id: 'accessibility',
+        name: 'Accessibility Service',
+        description: 'Enables FRIDAY to read Android screen UI hierarchy and perform authorized taps, scrolls, and text input across apps.',
+        status: 'NOT_SUPPORTED',
+        canRequestInApp: false,
+        settingsTarget: 'accessibility',
+      },
+      notifications: {
+        id: 'notifications',
+        name: 'Active Session Notifications',
+        description: 'Required on Android 13+ to display persistent status and Stop buttons for background voice and screen capture.',
+        status: notifGranted ? 'GRANTED' : 'NOT_GRANTED',
+        canRequestInApp: true,
+        settingsTarget: 'notifications',
+      },
+      camera: {
+        id: 'camera',
+        name: 'Camera Access (Optional)',
+        description: 'Optional permission for visual camera inspection when explicitly enabled.',
+        status: camGranted ? 'GRANTED' : 'NOT_GRANTED',
+        canRequestInApp: true,
+      },
+      batteryOptimization: {
+        id: 'battery_optimization',
+        name: 'Unrestricted Background Operation',
+        description: 'Prevents Android from suspending FRIDAY during background voice or multi-step tasks.',
+        status: 'NOT_SUPPORTED',
+        canRequestInApp: false,
+        settingsTarget: 'battery',
+      },
+      checkedAt: Date.now(),
+    };
+  }
+
+  public async requestScreenCapture(): Promise<AndroidActionResult> {
+    return {
+      success: false,
+      action: 'REQUEST_SCREEN_CAPTURE',
+      errorCode: 'BRIDGE_UNAVAILABLE',
+      message: 'Android Screen Capture (MediaProjection) is an Android OS capability and requires the native FRIDAY Android APK.',
+    };
+  }
+
+  public async stopScreenCapture(): Promise<AndroidActionResult> {
+    return {
+      success: false,
+      action: 'STOP_SCREEN_CAPTURE',
+      errorCode: 'BRIDGE_UNAVAILABLE',
+      message: 'Android Screen Capture is not running in browser mode.',
+    };
+  }
+
+  public async inspectScreen(_includeScreenshot = false): Promise<AndroidActionResult<ScreenContextSnapshot>> {
+    return {
+      success: false,
+      action: 'INSPECT_SCREEN',
+      errorCode: 'BRIDGE_UNAVAILABLE',
+      message: 'Inspecting the Android phone screen requires the native FRIDAY Android APK with Accessibility Service or Screen Capture enabled.',
+    };
+  }
+
+  public async captureScreenshot(): Promise<AndroidActionResult<ScreenContextSnapshot>> {
+    return {
+      success: false,
+      action: 'CAPTURE_SCREENSHOT',
+      errorCode: 'BRIDGE_UNAVAILABLE',
+      message: 'Capturing an Android screenshot requires the native FRIDAY Android APK with Screen Capture or Accessibility Service enabled.',
+    };
+  }
+
+  public async performScreenAction(request: ScreenActionRequest): Promise<AndroidActionResult> {
+    return {
+      success: false,
+      action: 'SCREEN_ACTION',
+      errorCode: 'BRIDGE_UNAVAILABLE',
+      message: `Android screen action (${request.action}) requires the native FRIDAY Android APK with Accessibility Service enabled.`,
+    };
   }
 }

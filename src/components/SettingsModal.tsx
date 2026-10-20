@@ -201,6 +201,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 )}
               </div>
             )}
+
+            {/* AI Studio Preview vs Deployed Backend Notice */}
+            {healthReport?.isPreviewEndpoint && (
+              <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-500/30 text-[11px] font-mono text-amber-200/90 space-y-1">
+                <div className="flex items-center space-x-1.5 font-bold text-amber-300">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                  <span>AI Studio Preview Container Active</span>
+                </div>
+                <p className="text-[10px] text-amber-300/80 leading-relaxed font-sans">
+                  This endpoint is an ephemeral developer container that sleeps when idle. Standalone Android APKs need a permanently deployed backend (e.g. Google Cloud Run, Render, Railway, or local LAN IP like <code className="text-cyan-300">http://192.168.1.x:3000</code>).
+                </p>
+                <p className="text-[10px] text-slate-400 font-sans">
+                  See <code className="text-cyan-300">BACKEND_DEPLOYMENT_GUIDE.md</code> in project root for 1-command deployment instructions.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Engine specifications */}
