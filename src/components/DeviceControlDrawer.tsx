@@ -725,6 +725,12 @@ export const DeviceControlDrawer: React.FC<DeviceControlDrawerProps> = ({ isOpen
                 >
                   Type
                 </button>
+                <button
+                  onClick={() => handlePerformScreenAction('REPLACE_TEXT')}
+                  className="px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-200 text-xs font-mono transition"
+                >
+                  Replace
+                </button>
               </div>
               <div className="grid grid-cols-4 gap-1.5 pt-1">
                 <button

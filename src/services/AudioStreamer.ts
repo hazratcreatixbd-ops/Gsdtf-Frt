@@ -4,6 +4,8 @@
  * calculates volume levels for visualization, and supports instant VAD-based interruption.
  */
 
+import { speakerVerificationManager } from './SpeakerVerificationManager';
+
 export interface AudioStreamerCallbacks {
   onAudioData: (base64Pcm: string) => void;
   onVolumeChange: (volume: number) => void;
@@ -217,6 +219,9 @@ export class AudioStreamer {
         } else {
           pcmData16k = inputChannelData;
         }
+
+        // Real-time acoustic speaker verification analysis (client-side, privacy-preserving)
+        speakerVerificationManager.processAudioFrame(pcmData16k);
 
         // Convert Float32 (-1.0 to 1.0) to Int16 PCM
         const pcm16 = this.floatTo16BitPCM(pcmData16k);

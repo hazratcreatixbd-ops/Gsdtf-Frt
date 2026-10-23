@@ -1,0 +1,20 @@
+{
+  "id": "fb_1792670544539",
+  "projectId": "p14_media_1792670543548",
+  "caption": "Handcrafted minimalist teak chair collection.",
+  "mediaPaths": [
+    "/api/part14/files/p14_media_1792670543548/original_visual_1792670544527.svg"
+  ],
+  "status": "VERIFYING",
+  "stageHistory": [
+    "WAITING_APPROVAL",
+    "PUBLISHING",
+    "VERIFYING"
+  ],
+  "approvalRequestId": "appr_1792670544538_ma3o",
+  "approvedByUser": true,
+  "externalApiStatus": "UNAVAILABLE",
+  "verifiedBeforePublished": false,
+  "reason": "Staged at Approval Gate. Never shows PUBLISHED before confirmation and verification.",
+  "timestamp": 1792670544539
+}

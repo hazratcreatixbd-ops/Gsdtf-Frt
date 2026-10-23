@@ -11,6 +11,7 @@ import { toolManager } from './ToolManager';
 import { androidBridge } from './AndroidBridge/AndroidBridge';
 import { workerTaskQueue } from '../world/manager/WorkerTaskQueue';
 import { backgroundExecutionQueue } from './AndroidBridge/BackgroundExecutionQueue';
+import { speakerVerificationManager } from './SpeakerVerificationManager';
 import { FridayState, TranscriptionItem, MemoryItem, TaskItem } from '../types/friday';
 
 export interface LiveSessionCallbacks {
@@ -71,8 +72,7 @@ export class LiveSession {
   private failureReason: string | null = null;
   private permissionStatus: 'idle' | 'requesting' | 'granted' | 'denied' | 'error' = 'idle';
 
-  private static readonly DEFAULT_CLOUD_SERVER_URL =
-    'https://ais-dev-y34kxoace7g7txsixtaqn5-87869525848.asia-southeast1.run.app';
+  private static readonly DEFAULT_CLOUD_SERVER_URL = '';
 
   public static normalizeServerUrl(raw: string): string {
     let cleaned = raw.trim();
@@ -95,7 +95,12 @@ export class LiveSession {
     try {
       const saved = localStorage.getItem('friday_server_url')?.trim();
       if (saved) {
-        return LiveSession.normalizeServerUrl(saved);
+        // If the user previously had the ephemeral AI Studio dev URL saved, do not treat it as a valid production cloud endpoint on the APK
+        if (LiveSession.isBundledLocalOrigin() && LiveSession.isPreviewEndpointUrl(saved)) {
+          // Ignore stale ephemeral dev preview container URL
+        } else {
+          return LiveSession.normalizeServerUrl(saved);
+        }
       }
     } catch {}
     if (
@@ -105,12 +110,10 @@ export class LiveSession {
       return '';
     }
     const envUrl = (import.meta as any).env?.VITE_FRIDAY_SERVER_URL?.trim();
-    if (envUrl) {
+    if (envUrl && !LiveSession.isPreviewEndpointUrl(envUrl)) {
       return LiveSession.normalizeServerUrl(envUrl);
     }
-    if (LiveSession.isBundledLocalOrigin()) {
-      return LiveSession.DEFAULT_CLOUD_SERVER_URL;
-    }
+    // Bundled Android APK assets (appassets.androidplatform.net) must use a deployed server endpoint
     return '';
   }
 
@@ -123,11 +126,12 @@ export class LiveSession {
     if (typeof window !== 'undefined' && !LiveSession.isBundledLocalOrigin()) {
       return window.location.origin.replace(/\/+$/, '');
     }
-    return LiveSession.DEFAULT_CLOUD_SERVER_URL;
+    return '';
   }
 
   public static getResolvedWsUrl(overrideUrl?: string): string {
     const httpBase = LiveSession.getResolvedHttpBaseUrl(overrideUrl);
+    if (!httpBase) return '';
     const wsBase = httpBase
       .replace(/^https:/i, 'wss:')
       .replace(/^http:/i, 'ws:');
@@ -140,6 +144,18 @@ export class LiveSession {
 
   public static async checkServerHealth(overrideUrl?: string, verifyWs = false): Promise<EndpointHealthReport> {
     const httpBaseUrl = LiveSession.getResolvedHttpBaseUrl(overrideUrl);
+    if (!httpBaseUrl) {
+      return {
+        reachable: false,
+        wsHandshakeOk: false,
+        hasGeminiKey: false,
+        isPreviewEndpoint: false,
+        httpBaseUrl: '',
+        wsUrl: '',
+        latencyMs: 0,
+        errorReason: 'No server endpoint configured. Enter your deployed FRIDAY server URL (Google Cloud Run, Render, or LAN) in Architecture Settings to connect.',
+      };
+    }
     const wsUrl = LiveSession.getResolvedWsUrl(overrideUrl);
     const isPreviewEndpoint = LiveSession.isPreviewEndpointUrl(httpBaseUrl);
     const startTime = Date.now();
@@ -471,7 +487,7 @@ export class LiveSession {
         true
       );
       this.callbacks.onError?.(
-        'OFFLINE / SERVER UNAVAILABLE: FRIDAY voice requires a live FRIDAY Cloud Server URL. Configure the Server Endpoint in Settings.'
+        'SERVER CONFIGURATION REQUIRED: Please enter your deployed FRIDAY server URL (Google Cloud Run, Render, or LAN) in Architecture Settings to activate voice.'
       );
       this.disconnect();
       return;
@@ -803,6 +819,7 @@ export class LiveSession {
     if (this.isIntentionalClose || this.reconnectTimeout) return;
     this.reconnectAttempts++;
     this.isSessionReady = false;
+    speakerVerificationManager.resetSessionVerification('network_reconnect');
     this.setState('connecting');
     this.syncForegroundNotification(`Reconnecting voice session (attempt ${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})...`);
 
@@ -1118,6 +1135,7 @@ export class LiveSession {
     this.isIntentionalClose = true;
     this.isSessionReady = false;
     this.hadSuccessfulConnection = false;
+    speakerVerificationManager.resetSessionVerification('session_disconnect');
     this.clearConnectTimeout();
     this.clearReconnectTimeout();
 

@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 const server = http.createServer(app);
-const PORT = Number(process.env.DEFAULT_APP_PORT) || Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || Number(process.env.DEFAULT_APP_PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Ensure standard user-agent and API key
@@ -247,10 +247,36 @@ PART 15 — ANDROID PERMISSION CENTER, SCREEN VISION & AUTHORIZED SCREEN INTERAC
      -> Call 'android_screen_action' with the appropriate action ('CLICK_TEXT', 'SCROLL_FORWARD', 'SCROLL_BACKWARD', 'INPUT_TEXT', 'TAP_COORDINATES', 'SWIPE', 'GLOBAL_BACK', 'GLOBAL_HOME', 'GLOBAL_RECENTS', 'GLOBAL_NOTIFICATIONS').
   5. "FRIDAY, check my Android permissions" / "open accessibility settings":
      -> Call 'android_check_permissions' or 'android_open_settings'.
-- STRICT PART 15 SAFETY & HONESTY RULES:
-  - NEVER claim to see the screen unless Screen Capture or Accessibility Service actually returned screen data.
-  - If Screen Capture or Accessibility Service is not enabled, clearly tell the user which permission is missing and offer to open the Permission Center or Android Settings.
-  - Sensitive actions (sending messages, deleting items, financial/payment buttons, posting publicly, or changing security settings) require explicit user confirmation before execution.
+- STRICT PART 15 & 15.1 CROSS-APP, RESEARCH & VOICE AUTHORIZATION RULES:
+  - REAL CROSS-APP TEXT ENTRY & 5-STAGE LIFECYCLE:
+    1. "Open WhatsApp and type Hi" -> Call 'cross_app_text_action' with targetPackage 'com.whatsapp', text 'Hi'.
+       Or launch WhatsApp and call 'cross_app_text_action' or 'android_screen_action'.
+    2. Lifecycle stages: REQUESTED -> VALIDATING -> EXECUTING -> VERIFYING -> COMPLETED/FAILED.
+    3. Never report an action completed simply because the tool was called. Ensure Accessibility node text is verified.
+    4. If WhatsApp is opened to the chats list without a specific chat open, do NOT type into the search bar or FRIDAY. Ask the user: "WhatsApp is on the chats list. Which contact or chat would you like to open?"
+    5. NEVER send a message automatically. Sending is a sensitive action requiring explicit user confirmation.
+  - WHATSAPP BUSINESS MESSAGE PREPARATION (7-STEP WORKFLOW):
+    1. Use 'prepare_whatsapp_business_message' to prepare professional business messages.
+    2. Workflow steps: (1) Identify contact -> (2) Check missing details -> (3) Fact-based research -> (4) Draft factual message -> (5) Preview & user edit card -> (6) Require user confirmation -> (7) Verified dispatch via 'dispatch_whatsapp_business_message'.
+    3. Strictly NEVER invent prices, dates, phone numbers, or facts.
+  - MULTI-AI RESEARCH & BENCHMARK COMPARISON:
+    1. When asked to compare frontier AI models (e.g. Gemini vs ChatGPT vs Claude vs DeepSeek):
+       -> Call 'compare_ai_models' with the user query.
+    2. Evaluate along verified dimensions: SWE-bench coding, MATH-500, MMLU-Pro reasoning, latency profiles, pricing per million tokens, and context window limits (Gemini 2M, Claude 200k, o1 200k, DeepSeek 64k).
+    3. Clearly distinguish verified published benchmark facts from estimates/opinions. Disclose that comparisons are based on published technical specifications without claiming unconfigured APIs were queried in real time.
+  - YOUTUBE RESEARCH & TUTORIAL WORKFLOW:
+    1. When user asks for video tutorials (e.g. "Find a video tutorial on how to install Arch Linux"):
+       -> Call 'research_youtube_tutorials' with query.
+    2. Evaluate candidates based on recency (2024-2025 updates), relevance, creator credibility, practical demonstration, and timestamp chapter availability.
+    3. Recommend the top candidate with a clear breakdown.
+    4. Only open the video using 'open_youtube_tutorial' when the user confirms (e.g. "open the first result", "play the recommendation").
+    5. Never fabricate video transcripts or claim to have watched unseen frames.
+  - AUTHORIZED SPEAKER VERIFICATION & WAKE-WORD HANDLING:
+    1. Support configurable wake phrase ("Hey FRIDAY", "FRIDAY", "Hey Assistant", "Computer") via 'configure_wake_word'.
+    2. Require biometric speaker verification against enrolled user voice. Treat unknown or uncertain speakers as unauthorized.
+    3. If speaker is unauthorized, reject activation and refuse protected actions (cross-app text entry, messaging, task deletion).
+    4. Never interpret silence or ambient noise as commands. Prevent duplicate active sessions.
+    5. Never read or type into password fields.
 
 PART 7 — BUSINESS INTELLIGENCE & PLANNING ENGINE:
 - You are an expert Business Intelligence & Planning Assistant.
@@ -1095,11 +1121,11 @@ const androidScreenActionTool: FunctionDeclaration = {
     properties: {
       action: {
         type: Type.STRING,
-        description: 'Action type: CLICK_TEXT, CLICK_ID, TAP_COORDINATES, SWIPE, SCROLL_FORWARD, SCROLL_BACKWARD, INPUT_TEXT, GLOBAL_BACK, GLOBAL_HOME, GLOBAL_RECENTS, GLOBAL_NOTIFICATIONS',
+        description: 'Action type: CLICK_TEXT, CLICK_ID, TAP_COORDINATES, SWIPE, SCROLL_FORWARD, SCROLL_BACKWARD, INPUT_TEXT, REPLACE_TEXT, CLEAR_TEXT, GLOBAL_BACK, GLOBAL_HOME, GLOBAL_RECENTS, GLOBAL_NOTIFICATIONS',
       },
       targetText: { type: Type.STRING, description: 'Visible text or content description of the UI element to click or target for text input.' },
       viewId: { type: Type.STRING, description: 'Optional Android view resource ID to target.' },
-      inputText: { type: Type.STRING, description: 'Text to enter when action is INPUT_TEXT.' },
+      inputText: { type: Type.STRING, description: 'Text to enter when action is INPUT_TEXT or REPLACE_TEXT.' },
       direction: { type: Type.STRING, description: 'Scroll direction: DOWN, UP, LEFT, or RIGHT.' },
       x: { type: Type.NUMBER, description: 'X coordinate on screen for TAP_COORDINATES or SWIPE.' },
       y: { type: Type.NUMBER, description: 'Y coordinate on screen for TAP_COORDINATES or SWIPE.' },
@@ -2300,6 +2326,98 @@ const toolsConfig = [
       androidInspectScreenTool,
       androidCaptureScreenshotTool,
       androidScreenActionTool,
+      {
+        name: 'cross_app_text_action',
+        description: 'Part 15.1: Real, verified Android cross-app text entry into external apps (e.g. WhatsApp, Notes, Messaging). Follows strict 5-stage lifecycle (Requested, Validating, Executing, Verifying, Completed/Failed). Dispatches via Android AccessibilityService ACTION_SET_TEXT, polls for window transition, checks active conversation vs chat list, and verifies node text before claiming success. Never sends messages automatically.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            targetPackage: { type: Type.STRING, description: 'Android package identifier, e.g. "com.whatsapp"' },
+            targetAppName: { type: Type.STRING, description: 'Display name of target app, e.g. "WhatsApp"' },
+            text: { type: Type.STRING, description: 'Text message to enter into the active text field' },
+            targetFieldHint: { type: Type.STRING, description: 'Optional field hint or view ID, e.g. "com.whatsapp:id/entry"' },
+            isReplace: { type: Type.BOOLEAN, description: 'Whether to replace existing text in field' },
+            confirmedSensitive: { type: Type.BOOLEAN, description: 'Confirmation for sensitive action' },
+            recipient: { type: Type.STRING, description: 'Optional recipient contact name or phone number' },
+          },
+          required: ['targetPackage', 'text'],
+        },
+      },
+      {
+        name: 'compare_ai_models',
+        description: 'Part 15.1: Evaluates and compares frontier AI models (Gemini 2.5 Pro/Flash, OpenAI GPT-4o/o1, Claude 3.7/3.5 Sonnet, DeepSeek R1) along verified benchmarks (SWE-bench, MATH-500, MMLU-Pro), reasoning, latency, pricing per million tokens, and context window limits. Distinguishes verified facts from estimates/opinions without claiming unconfigured APIs were queried in real time.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            query: { type: Type.STRING, description: 'User question or comparison focus (e.g. "compare models for coding", "which model is best for math on a budget", "Gemini vs Claude 3.7")' },
+            modelIds: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'Optional list of specific models to compare' },
+          },
+          required: ['query'],
+        },
+      },
+      {
+        name: 'research_youtube_tutorials',
+        description: 'Part 15.1: Searches YouTube for tutorials (e.g. "how to install Arch Linux"), collects candidates, evaluates them across recency, relevance, creator credibility, practical demonstrations, and timestamp chapters, and presents the top recommendation with a clear breakdown. Does not open until user confirms.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            query: { type: Type.STRING, description: 'Tutorial topic or how-to search query, e.g. "how to install Arch Linux"' },
+          },
+          required: ['query'],
+        },
+      },
+      {
+        name: 'open_youtube_tutorial',
+        description: 'Part 15.1: Opens the selected or recommended YouTube video after explicit user confirmation (e.g. "open the first result", "play the recommendation").',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            sessionId: { type: Type.STRING, description: 'Optional YouTube research session ID' },
+            target: { type: Type.STRING, description: '"first", "top", or video ID' },
+            userConfirmed: { type: Type.BOOLEAN, description: 'Must be true to open' },
+          },
+          required: ['userConfirmed'],
+        },
+      },
+      {
+        name: 'prepare_whatsapp_business_message',
+        description: 'Part 15.1: Prepares a professional WhatsApp business message following the strict 7-step workflow: contact identification, checking missing details, factual business research, drafting without invented facts/prices, preview card generation, and requiring user confirmation before sending.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            recipientName: { type: Type.STRING, description: 'Name of the business contact or owner' },
+            recipientPhone: { type: Type.STRING, description: 'Phone number if known' },
+            businessName: { type: Type.STRING, description: 'Name of the business' },
+            objective: { type: Type.STRING, description: 'Purpose of the message' },
+            knownFacts: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'Verified factual information to reference' },
+          },
+          required: ['objective'],
+        },
+      },
+      {
+        name: 'dispatch_whatsapp_business_message',
+        description: 'Part 15.1: Dispatches a prepared WhatsApp business draft after explicit user confirmation ("Yes, send it"). Fails closed if speaker is unauthorized or unconfirmed.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            draftId: { type: Type.STRING, description: 'Draft ID from prepare_whatsapp_business_message' },
+            confirmedSensitive: { type: Type.BOOLEAN, description: 'Explicit user confirmation to send message' },
+          },
+          required: ['draftId', 'confirmedSensitive'],
+        },
+      },
+      {
+        name: 'configure_wake_word',
+        description: 'Part 15.1: Configures hands-free wake word detection ("Hey FRIDAY", "FRIDAY", "Hey Assistant", "Computer") and speaker authorization requirement.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            enabled: { type: Type.BOOLEAN, description: 'Enable or disable wake word detection' },
+            wakePhrase: { type: Type.STRING, description: '"Hey FRIDAY" | "FRIDAY" | "Hey Assistant" | "Computer"' },
+            requireAuthorizedSpeaker: { type: Type.BOOLEAN, description: 'Whether to require biometric speaker voiceprint match before activating' },
+          },
+        },
+      },
     ],
   },
 ];
@@ -4158,6 +4276,9 @@ app.get('/api/health', (_req, res) => {
     hasKey: !!process.env.GEMINI_API_KEY,
     wsPath: '/api/live',
     timestamp: Date.now(),
+    environment: isProduction ? 'production' : 'development',
+    deploymentTarget: process.env.K_SERVICE ? 'Google Cloud Run' : 'Standalone Server',
+    uptimeSeconds: Math.floor(process.uptime()),
   });
 });
 

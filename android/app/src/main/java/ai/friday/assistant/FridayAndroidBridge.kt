@@ -252,7 +252,28 @@ class FridayAndroidBridge(
                 "SCREEN_INPUT_TEXT" -> {
                     val text = request.payload?.get("text") as? String ?: ""
                     val fieldHint = request.payload?.get("fieldHint") as? String
-                    gson.fromJson(performScreenInputText(text, fieldHint), NativeBridgeResponse::class.java).copy(requestId = request.requestId)
+                    val isReplace = request.payload?.get("isReplace") as? Boolean ?: false
+                    val expectedPackage = request.payload?.get("expectedPackage") as? String
+                    val accService = FridayAccessibilityService.getInstance()
+                    if (accService == null) {
+                        NativeBridgeResponse(
+                            requestId = request.requestId,
+                            action = request.action,
+                            success = false,
+                            errorCode = AndroidErrorCodes.ACCESSIBILITY_REQUIRED,
+                            message = "Android Accessibility Service is required to enter text into fields."
+                        )
+                    } else {
+                        val detailed = accService.performInputTextEx(text, fieldHint, isReplace, expectedPackage)
+                        NativeBridgeResponse(
+                            requestId = request.requestId,
+                            action = request.action,
+                            success = detailed.success,
+                            errorCode = detailed.errorCode,
+                            message = detailed.message,
+                            data = detailed
+                        )
+                    }
                 }
                 "SCREEN_GLOBAL_NAVIGATION" -> {
                     val navAction = request.payload?.get("navAction") as? String ?: "back"
@@ -521,27 +542,29 @@ class FridayAndroidBridge(
                 )
             )
 
-        if (!confirmed && accService.isSensitiveTarget(targetText)) {
+        val isSensitive = accService.isSensitiveAction(targetText)
+        if (isSensitive && !confirmed) {
             return gson.toJson(
                 NativeBridgeResponse(
                     requestId = "click_${System.currentTimeMillis()}",
                     action = "SCREEN_CLICK_ELEMENT",
                     success = false,
                     errorCode = AndroidErrorCodes.CONFIRMATION_REQUIRED,
-                    message = "Safety Guardrail: Clicking '$targetText' is a sensitive action. Explicit user confirmation is required before executing.",
+                    message = "Safety Guardrail: Clicking '$targetText' is a sensitive action (sending message, financial, or data modification). Explicit user confirmation is required before executing.",
                     data = mapOf("targetText" to targetText, "requiresConfirmation" to true)
                 )
             )
         }
 
-        val clicked = accService.performAuthorizedClick(targetText)
+        val detailed = accService.performAuthorizedClickEx(targetText, confirmed)
         return gson.toJson(
             NativeBridgeResponse(
                 requestId = "click_${System.currentTimeMillis()}",
                 action = "SCREEN_CLICK_ELEMENT",
-                success = clicked,
-                errorCode = if (clicked) null else AndroidErrorCodes.ACTION_FAILED,
-                message = if (clicked) "Clicked UI element matching '$targetText'." else "Could not find a clickable UI element matching '$targetText' on the current screen."
+                success = detailed.success,
+                errorCode = detailed.errorCode,
+                message = detailed.message,
+                data = detailed
             )
         )
     }
@@ -597,7 +620,10 @@ class FridayAndroidBridge(
     }
 
     @JavascriptInterface
-    fun performScreenInputText(text: String, fieldHint: String?): String {
+    fun performScreenInputText(text: String, fieldHint: String?): String = performScreenInputTextEx(text, fieldHint, false, null)
+
+    @JavascriptInterface
+    fun performScreenInputTextEx(text: String, fieldHint: String?, isReplace: Boolean, expectedPackage: String?): String {
         val accService = FridayAccessibilityService.getInstance()
             ?: return gson.toJson(
                 NativeBridgeResponse(
@@ -609,14 +635,41 @@ class FridayAndroidBridge(
                 )
             )
 
-        val entered = accService.performInputText(text, fieldHint)
+        val detailed = accService.performInputTextEx(text, fieldHint, isReplace, expectedPackage)
         return gson.toJson(
             NativeBridgeResponse(
                 requestId = "input_${System.currentTimeMillis()}",
-                action = "SCREEN_INPUT_TEXT",
-                success = entered,
-                errorCode = if (entered) null else AndroidErrorCodes.ACTION_FAILED,
-                message = if (entered) "Entered text into ${fieldHint ?: "input field"}." else "Could not find an editable non-password input field on the current screen."
+                action = if (isReplace) "SCREEN_REPLACE_TEXT" else "SCREEN_INPUT_TEXT",
+                success = detailed.success,
+                errorCode = detailed.errorCode,
+                message = detailed.message,
+                data = detailed
+            )
+        )
+    }
+
+    @JavascriptInterface
+    fun performScreenReplaceText(text: String, fieldHint: String?): String {
+        val accService = FridayAccessibilityService.getInstance()
+            ?: return gson.toJson(
+                NativeBridgeResponse(
+                    requestId = "replace_${System.currentTimeMillis()}",
+                    action = "SCREEN_REPLACE_TEXT",
+                    success = false,
+                    errorCode = AndroidErrorCodes.ACCESSIBILITY_REQUIRED,
+                    message = "Android Accessibility Service is required to replace text in fields."
+                )
+            )
+
+        val detailed = accService.performInputTextEx(text, fieldHint, true, null)
+        return gson.toJson(
+            NativeBridgeResponse(
+                requestId = "replace_${System.currentTimeMillis()}",
+                action = "SCREEN_REPLACE_TEXT",
+                success = detailed.success,
+                errorCode = detailed.errorCode,
+                message = detailed.message,
+                data = detailed
             )
         )
     }
@@ -673,14 +726,74 @@ class FridayAndroidBridge(
             val x = (map?.get("x") as? Number)?.toFloat()
             val y = (map?.get("y") as? Number)?.toFloat()
             val direction = (map?.get("direction") as? String) ?: "down"
-            val confirmed = (map?.get("confirmed") as? Boolean) ?: false
+            val confirmed = (map?.get("confirmed") as? Boolean)
+                ?: (map?.get("confirmedSensitive") as? Boolean)
+                ?: false
+            val isReplace = (map?.get("isReplace") as? Boolean)
+                ?: (map?.get("replace") as? Boolean)
+                ?: (action.uppercase() == "REPLACE_TEXT" || action.uppercase() == "REPLACE")
+            val expectedPackage = (map?.get("expectedPackage") ?: map?.get("packageName"))?.toString()
+
+            val accService = FridayAccessibilityService.getInstance()
+            if (accService == null && !action.uppercase().startsWith("GLOBAL_") && action.uppercase() != "NAVIGATE") {
+                return gson.toJson(
+                    NativeBridgeResponse(
+                        requestId = "sa_${System.currentTimeMillis()}",
+                        action = "PERFORM_SCREEN_ACTION",
+                        success = false,
+                        errorCode = AndroidErrorCodes.ACCESSIBILITY_REQUIRED,
+                        message = "Android Accessibility Service is required to perform screen action '$action'."
+                    )
+                )
+            }
 
             when (action.uppercase()) {
                 "CLICK_TEXT", "CLICK" -> performScreenClick(target, confirmed)
                 "TAP_COORDINATES", "TAP" -> if (x != null && y != null) performScreenTap(x, y) else performScreenClick(target, confirmed)
-                "SCROLL" -> performScreenScroll(direction)
-                "INPUT_TEXT", "TYPE" -> performScreenInputText(text, target)
-                "NAVIGATE", "NAV" -> performGlobalNavigation(target)
+                "SCROLL", "SCROLL_FORWARD", "SCROLL_BACKWARD" -> performScreenScroll(direction)
+                "INPUT_TEXT", "TYPE" -> {
+                    val detailed = accService?.performInputTextEx(text, target.ifEmpty { null }, isReplace, expectedPackage)
+                    gson.toJson(
+                        NativeBridgeResponse(
+                            requestId = "sa_${System.currentTimeMillis()}",
+                            action = "PERFORM_SCREEN_ACTION",
+                            success = detailed?.success ?: false,
+                            errorCode = detailed?.errorCode,
+                            message = detailed?.message ?: "Accessibility service not running",
+                            data = detailed
+                        )
+                    )
+                }
+                "REPLACE_TEXT", "REPLACE" -> {
+                    val detailed = accService?.performInputTextEx(text, target.ifEmpty { null }, true, expectedPackage)
+                    gson.toJson(
+                        NativeBridgeResponse(
+                            requestId = "sa_${System.currentTimeMillis()}",
+                            action = "PERFORM_SCREEN_ACTION",
+                            success = detailed?.success ?: false,
+                            errorCode = detailed?.errorCode,
+                            message = detailed?.message ?: "Accessibility service not running",
+                            data = detailed
+                        )
+                    )
+                }
+                "CLEAR_TEXT" -> {
+                    val detailed = accService?.performInputTextEx("", target.ifEmpty { null }, true, expectedPackage)
+                    gson.toJson(
+                        NativeBridgeResponse(
+                            requestId = "sa_${System.currentTimeMillis()}",
+                            action = "PERFORM_SCREEN_ACTION",
+                            success = detailed?.success ?: false,
+                            errorCode = detailed?.errorCode,
+                            message = detailed?.message ?: "Accessibility service not running",
+                            data = detailed
+                        )
+                    )
+                }
+                "NAVIGATE", "NAV", "GLOBAL_BACK", "GLOBAL_HOME", "GLOBAL_RECENTS", "GLOBAL_NOTIFICATIONS" -> {
+                    val navTarget = if (action.startsWith("GLOBAL_")) action.substringAfter("GLOBAL_").lowercase() else target.ifEmpty { "back" }
+                    performGlobalNavigation(navTarget)
+                }
                 else -> gson.toJson(
                     NativeBridgeResponse(
                         requestId = "sa_${System.currentTimeMillis()}",

@@ -83,6 +83,33 @@ data class ScreenCaptureDataDto(
     @SerializedName("timestamp") val timestamp: Long = System.currentTimeMillis()
 )
 
+data class ScreenActionResultDto(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("foregroundPackage") val foregroundPackage: String,
+    @SerializedName("foregroundAppName") val foregroundAppName: String,
+    @SerializedName("actionType") val actionType: String,
+    @SerializedName("fieldFound") val fieldFound: Boolean = false,
+    @SerializedName("fieldFocused") val fieldFocused: Boolean = false,
+    @SerializedName("verified") val verified: Boolean = false,
+    @SerializedName("previousText") val previousText: String? = null,
+    @SerializedName("updatedText") val updatedText: String? = null,
+    @SerializedName("message") val message: String,
+    @SerializedName("errorCode") val errorCode: String? = null,
+    @SerializedName("alternative") val alternative: String? = null,
+    @SerializedName("timestamp") val timestamp: Long = System.currentTimeMillis()
+)
+
+data class ActionLifecycleStageDto(
+    @SerializedName("actionId") val actionId: String,
+    @SerializedName("actionType") val actionType: String,
+    @SerializedName("targetApp") val targetApp: String,
+    @SerializedName("stage") val stage: String, // "REQUESTED", "VALIDATING", "EXECUTING", "VERIFYING", "COMPLETED", "FAILED"
+    @SerializedName("message") val message: String,
+    @SerializedName("verified") val verified: Boolean = false,
+    @SerializedName("errorCode") val errorCode: String? = null,
+    @SerializedName("timestamp") val timestamp: Long = System.currentTimeMillis()
+)
+
 object AndroidErrorCodes {
     const val APP_NOT_INSTALLED = "ANDROID_APP_NOT_INSTALLED"
     const val PERMISSION_DENIED = "PERMISSION_DENIED"
@@ -98,4 +125,10 @@ object AndroidErrorCodes {
     const val USER_CANCELLED = "USER_CANCELLED"
     const val INVALID_PARAMETERS = "INVALID_PARAMETERS"
     const val FEATURE_NOT_AVAILABLE = "FEATURE_NOT_AVAILABLE"
+    const val FOREGROUND_APP_MISMATCH = "FOREGROUND_APP_MISMATCH"
+    const val TEXT_ENTRY_FAILED = "TEXT_ENTRY_FAILED"
+    const val UNAUTHORIZED_SPEAKER = "UNAUTHORIZED_SPEAKER"
+    const val UNCERTAIN_SPEAKER = "UNCERTAIN_SPEAKER"
+    const val CHAT_NOT_SELECTED = "CHAT_NOT_SELECTED"
+    const val RECIPIENT_AMBIGUOUS = "RECIPIENT_AMBIGUOUS"
 }

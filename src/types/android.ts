@@ -119,10 +119,59 @@ export type ScreenActionType =
   | 'SCROLL_FORWARD'
   | 'SCROLL_BACKWARD'
   | 'INPUT_TEXT'
+  | 'REPLACE_TEXT'
+  | 'CLEAR_TEXT'
   | 'GLOBAL_BACK'
   | 'GLOBAL_HOME'
   | 'GLOBAL_RECENTS'
   | 'GLOBAL_NOTIFICATIONS';
+
+export interface ScreenActionResultDetails {
+  success: boolean;
+  foregroundPackage: string;
+  foregroundAppName: string;
+  actionType: string;
+  fieldFound?: boolean;
+  fieldFocused?: boolean;
+  verified?: boolean;
+  previousText?: string | null;
+  updatedText?: string | null;
+  message: string;
+  errorCode?: string | null;
+  alternative?: string | null;
+  timestamp?: number;
+}
+
+export type ActionLifecycleStage =
+  | 'REQUESTED'
+  | 'VALIDATING'
+  | 'EXECUTING'
+  | 'VERIFYING'
+  | 'COMPLETED'
+  | 'FAILED';
+
+export interface ActionLifecycleEvent {
+  actionId: string;
+  actionType: string;
+  targetApp: string;
+  stage: ActionLifecycleStage;
+  message: string;
+  verified?: boolean;
+  errorCode?: string | null;
+  timestamp: number;
+  details?: Record<string, any>;
+}
+
+export interface CrossAppActionRequest {
+  targetPackage: string;
+  targetAppName?: string;
+  targetFieldHint?: string;
+  text: string;
+  isReplace?: boolean;
+  confirmedSensitive?: boolean;
+  recipient?: string;
+  autoSend?: boolean; // Must strictly default to false; sensitive sends require confirmation
+}
 
 export interface ScreenActionRequest {
   action: ScreenActionType;
@@ -135,6 +184,10 @@ export interface ScreenActionRequest {
   endY?: number;
   direction?: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
   confirmedSensitive?: boolean;
+  isReplace?: boolean;
+  replace?: boolean;
+  expectedPackage?: string;
+  packageName?: string;
 }
 
 export interface AndroidDeviceInfo {
@@ -303,6 +356,8 @@ export type NativeEventType =
   | 'ACTION_STARTED'
   | 'ACTION_COMPLETED'
   | 'ACTION_FAILED'
+  | 'ACTION_LIFECYCLE'
+  | 'WAKE_WORD_DETECTED'
   | 'USER_CANCELLED'
   | 'APP_LIFECYCLE_CHANGED'
   | 'FOREGROUND_NOTIFICATION_ACTION'

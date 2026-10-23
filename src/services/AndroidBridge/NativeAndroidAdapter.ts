@@ -1105,3 +1105,6 @@ export class NativeAndroidAdapter implements IAndroidBridge {
     }
   }
 }
+
+export const nativeAndroidAdapter = new NativeAndroidAdapter();
+

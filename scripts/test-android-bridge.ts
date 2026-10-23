@@ -41,6 +41,10 @@ async function runTestSuite() {
     }
   }
 
+  // Disable speaker verification during isolated Android bridge protocol testing
+  const { speakerVerificationManager } = await import('../src/services/SpeakerVerificationManager');
+  speakerVerificationManager.setEnabled(false);
+
   const bridge = new AndroidBridge();
 
   // Test 1: AndroidBridge unavailable in web mode
@@ -609,6 +613,8 @@ async function runTestSuite() {
       'Test 27: Part 15 Native Screen Vision, UI Hierarchy, Screenshot & Sensitive Action Confirmation Guard verified'
     );
   }
+
+  speakerVerificationManager.setEnabled(true);
 
   console.log('\n====================================================');
   console.log(`TEST SUMMARY: ${passed} PASSED, ${failed} FAILED`);

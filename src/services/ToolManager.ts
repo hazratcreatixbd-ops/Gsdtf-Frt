@@ -19,6 +19,12 @@ import { workerTaskQueue } from '../world/manager/WorkerTaskQueue';
 import { approvalGate } from '../world/manager/ApprovalGate';
 import { advancedMemoryManager } from './memory/AdvancedMemoryManager';
 import { part14Orchestrator } from './part14/Part14Orchestrator';
+import { speakerVerificationManager } from './SpeakerVerificationManager';
+import { actionLifecycleManager } from './AndroidBridge/ActionLifecycleManager';
+import { wakeWordDetector } from './WakeWordDetector';
+import { whatsAppBusinessWorkflowManager } from './WhatsAppBusinessWorkflowManager';
+import { multiAiResearchManager } from './MultiAiResearchManager';
+import { youtubeResearchManager } from './YouTubeResearchManager';
 
 export type ToolExecutionListener = (item: ToolCallItem) => void;
 
@@ -81,6 +87,20 @@ export class ToolManager {
 
     this.history.unshift(item);
     this.notify(item);
+
+    // Fail-closed Speaker Verification Guard for protected actions
+    const authCheck = speakerVerificationManager.validateCommandExecution(name, args);
+    if (!authCheck.allowed) {
+      item.status = 'failed';
+      item.result = {
+        success: false,
+        errorCode: authCheck.errorCode || 'UNAUTHORIZED_SPEAKER',
+        message: authCheck.reason,
+        blockedBySpeakerVerification: true,
+      };
+      this.notify(item);
+      return item.result;
+    }
 
     try {
       let result: any = null;
@@ -216,8 +236,12 @@ export class ToolManager {
       } else if (name === 'android_capture_screenshot' || name === 'capture_screenshot') {
         result = await androidBridge.captureScreenshot();
       } else if (name === 'android_screen_action' || name === 'screen_action') {
+        const rawAction = String(args.action || args.screenAction || 'CLICK_TEXT').toUpperCase();
+        const isReplace = Boolean(
+          args.isReplace || args.replace || rawAction === 'REPLACE_TEXT' || rawAction === 'REPLACE'
+        );
         result = await androidBridge.performScreenAction({
-          action: args.action || args.screenAction || 'CLICK_TEXT',
+          action: (isReplace ? 'REPLACE_TEXT' : (rawAction as any)) || 'CLICK_TEXT',
           targetText: args.targetText || args.target,
           viewId: args.viewId,
           inputText: args.inputText || args.text,
@@ -227,7 +251,68 @@ export class ToolManager {
           endX: args.endX !== undefined ? Number(args.endX) : undefined,
           endY: args.endY !== undefined ? Number(args.endY) : undefined,
           confirmedSensitive: Boolean(args.confirmedSensitive),
+          isReplace,
+          replace: isReplace,
+          expectedPackage: args.expectedPackage || args.packageName,
         });
+      } else if (name === 'cross_app_text_action' || name === 'crossAppTextAction') {
+        const text = String(args.text || args.inputText || '').trim();
+        const targetPackage = String(args.targetPackage || 'com.whatsapp').trim();
+        const targetAppName = args.targetAppName || (targetPackage.includes('whatsapp') ? 'WhatsApp' : 'Target App');
+        const targetFieldHint = args.targetFieldHint || (targetPackage.includes('whatsapp') ? 'com.whatsapp:id/entry' : undefined);
+        const isReplace = Boolean(args.isReplace || args.replace);
+        const confirmedSensitive = Boolean(args.confirmedSensitive);
+
+        result = await actionLifecycleManager.executeCrossAppTextAction({
+          targetPackage,
+          targetAppName,
+          targetFieldHint,
+          text,
+          isReplace,
+          confirmedSensitive,
+          recipient: args.recipient,
+        });
+      } else if (name === 'compare_ai_models' || name === 'compareAiModels') {
+        const query = String(args.query || 'Compare frontier AI models').trim();
+        const modelIds = Array.isArray(args.modelIds) ? args.modelIds : undefined;
+        result = multiAiResearchManager.compareModels(query, modelIds);
+      } else if (name === 'research_youtube_tutorials' || name === 'researchYouTubeTutorials') {
+        const query = String(args.query || 'tutorial').trim();
+        result = await youtubeResearchManager.researchTutorials(query);
+      } else if (name === 'open_youtube_tutorial' || name === 'openYouTubeTutorial') {
+        const sessionId = String(args.sessionId || '').trim();
+        const target = args.target || 'first';
+        result = await youtubeResearchManager.openSelectedVideo(sessionId, target);
+      } else if (name === 'prepare_whatsapp_business_message' || name === 'prepareWhatsAppBusinessMessage') {
+        result = whatsAppBusinessWorkflowManager.prepareBusinessMessage({
+          recipientName: args.recipientName,
+          recipientPhone: args.recipientPhone,
+          businessName: args.businessName,
+          objective: String(args.objective || 'Inquiry').trim(),
+          knownFacts: Array.isArray(args.knownFacts) ? args.knownFacts : undefined,
+        });
+      } else if (name === 'dispatch_whatsapp_business_message' || name === 'dispatchWhatsAppBusinessMessage') {
+        const draftId = String(args.draftId || '').trim();
+        const confirmedSensitive = Boolean(args.confirmedSensitive);
+        result = await whatsAppBusinessWorkflowManager.confirmAndDispatch(draftId, confirmedSensitive);
+      } else if (name === 'configure_wake_word' || name === 'configureWakeWord') {
+        wakeWordDetector.saveConfig(args);
+        result = {
+          success: true,
+          config: wakeWordDetector.getConfig(),
+          message: `Wake word configuration updated: phrase="${wakeWordDetector.getConfig().wakePhrase}", enabled=${wakeWordDetector.getConfig().enabled}`,
+        };
+      } else if (name === 'check_speaker_status' || name === 'getSpeakerStatus' || name === 'get_speaker_status') {
+        result = {
+          success: true,
+          enabled: speakerVerificationManager.isEnabled(),
+          enrolled: speakerVerificationManager.isEnrolled(),
+          state: speakerVerificationManager.getCurrentState(),
+          lastResult: speakerVerificationManager.getLastResult(),
+          message: speakerVerificationManager.isEnrolled()
+            ? `Authorized speaker verification is active (${speakerVerificationManager.getCurrentState()}).`
+            : 'No authorized voiceprint enrolled. User can configure speaker verification in Settings.',
+        };
       } else if (name === 'getBusinessProfile') {
         result = { success: true, profile: businessIntelligenceManager.getProfile() };
       } else if (name === 'updateBusinessProfile') {
